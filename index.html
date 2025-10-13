@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Workout Tracker</title>
+	<link rel="stylesheet" href="style.css" />
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+	<button id="settingsBtn" class="settings-btn" aria-label="Open settings">⚙️</button>
+	<h1>Workout Tracker</h1>
+
+	<div class="container">
+		<div class="main-panel">
+			<h2>Log Workout</h2>
+			<div id="workoutTotalTimer" class="total-timer">Total Time: 00:00</div>
+			<div class="buttons">
+				<button id="startWorkoutBtn" data-active="false">Start</button>
+				<button id="addExerciseBtn">+ Exercise</button>
+				<button id="addBreakBtn">+ Break</button>
+				<button id="saveWorkoutBtn">Save</button>
+				<button id="cancelEditBtn" style="display:none;">Cancel Edit</button>
+			</div>
+			<div style="margin-top:8px;"></div>
+			<div class="table-wrapper">
+				<table id="workoutTable">
+					<tr>
+						<th>Exercise</th>
+						<th>Sets</th>
+						<th>Reps</th>
+						<th>Weight</th>
+						<th>Diff</th>
+						<th>Notes</th>
+						<th>Remove</th>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+		<div class="history-panel">
+			<h2>History</h2>
+			<div id="history"></div>
+		</div>
+
+		<div class="progress-panel">
+			<h2>Progress</h2>
+			<select id="exerciseSelect"><option value="__all">All exercises</option></select>
+			<canvas id="difficultyChart"></canvas>
+			<canvas id="weightChart"></canvas>
+		</div>
+	</div>
+
+	<div id="settingsModal" class="modal-backdrop">
+		<div class="modal">
+			<h3>Settings</h3>
+			<div class="row">
+				<label for="defaultUnit">Default Unit</label>
+				<select id="defaultUnit">
+					<option value="kg">kg</option>
+					<option value="lbs">lbs</option>
+				</select>
+			</div>
+			<div class="row">
+				<label for="appearance">Appearance</label>
+				<select id="appearance">
+					<option value="light">Light</option>
+					<option value="dark">Dark</option>
+				</select>
+			</div>
+			<div class="row" style="justify-content:flex-end; gap:8px;">
+				<button id="saveSettingsBtn">Save</button>
+				<button id="closeSettingsBtn">Cancel</button>
+			</div>
+		</div>
+	</div>
+
+	<script src="script.js"></script>
+</body>
+</html>

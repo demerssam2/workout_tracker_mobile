@@ -1,0 +1,201 @@
+:root {
+	--bg: #f4f4f4;
+	--fg: #111;
+	--panel: #fff;
+	--border: #ccc;
+	--muted: #eee;
+	--backdrop: rgba(0,0,0,0.4);
+	--btn-bg: #e0e0e0;
+	--btn-fg: #111;
+	--btn-hover: #d0d0d0;
+}
+
+body.dark {
+	--bg: #1e1e1e;
+	--fg: #e5e5e5;
+	--panel: #2a2a2a;
+	--border: #444;
+	--muted: #3a3a3a;
+	--backdrop: rgba(0,0,0,0.6);
+	--btn-bg: #333;
+	--btn-fg: #e5e5e5;
+	--btn-hover: #444;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html, body {
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	font-family: Arial, sans-serif;
+	background: var(--bg);
+	color: var(--fg);
+	overflow-x: hidden;
+}
+
+h1 {
+	font-size: 20px;
+	text-align: center;
+	margin: 12px 0;
+}
+
+h2 {
+	font-size: 16px;
+	margin: 10px 0 6px 0;
+	text-align: center;
+}
+
+.container {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 12px;
+}
+
+.main-panel, .history-panel, .progress-panel {
+	background: var(--panel);
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	padding: 10px;
+	width: 100%;
+	max-width: 600px;
+	margin: 0 auto;
+}
+
+.total-timer {
+	text-align: center;
+	font-size: 16px;
+	margin-bottom: 10px;
+}
+
+.buttons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	justify-content: center;
+}
+
+button {
+	padding: 12px 14px;
+	font: inherit;
+	border-radius: 8px;
+	border: 1px solid var(--border);
+	background: var(--btn-bg);
+	color: var(--btn-fg);
+	cursor: pointer;
+	flex: 1 1 45%;
+	max-width: 48%;
+}
+
+button:hover {
+	background: var(--btn-hover);
+}
+
+.table-wrapper {
+	overflow-x: auto;
+	width: 100%;
+	border-radius: 8px;
+	border: 1px solid var(--border);
+	-webkit-overflow-scrolling: touch;
+}
+
+table {
+	width: 100%;
+	border-collapse: collapse;
+	min-width: 800px;
+}
+
+th, td {
+	border: 1px solid var(--border);
+	padding: 8px;
+	text-align: left;
+}
+
+.settings-btn {
+	position: fixed;
+	top: 10px;
+	right: 10px;
+	z-index: 100;
+	background: var(--btn-bg);
+	color: var(--btn-fg);
+	border: 1px solid var(--border);
+	border-radius: 50%;
+	width: 44px;
+	height: 44px;
+	font-size: 20px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+.settings-btn:hover {
+	background: var(--btn-hover);
+}
+
+.modal-backdrop {
+	display: none;
+	position: fixed;
+	inset: 0;
+	background: var(--backdrop);
+	justify-content: center;
+	align-items: center;
+	padding: 20px;
+}
+
+.modal {
+	background: var(--panel);
+	color: var(--fg);
+	padding: 18px;
+	border-radius: 10px;
+	width: 100%;
+	max-width: 420px;
+	border: 1px solid var(--border);
+}
+
+.modal .row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin: 10px 0;
+}
+
+/* History buttons */
+.history-btns {
+	display: flex;
+	gap: 6px;
+	justify-content: center;
+}
+
+.history-btns button {
+	flex: 0 0 auto;
+	padding: 6px 10px;
+	font-size: 13px;
+	border-radius: 6px;
+	border: none;
+}
+
+button.edit-btn {
+	background: #4da3ff;
+	color: #fff;
+}
+
+button.delete-btn {
+	background: #ff4d4d;
+	color: #fff;
+}
+
+.history-panel .table-wrapper {
+	overflow-x: auto;
+	width: 100%;
+	border-radius: 8px;
+	border: 1px solid var(--border);
+	-webkit-overflow-scrolling: touch;
+}
+
+.history-panel table {
+	min-width: 800px;
+}
