@@ -140,6 +140,7 @@ button:hover, button:focus {
     color: #fff;
     transition: background 0.18s;
 }
+
 #startWorkoutBtn:hover {
     background: var(--btn-start-hover);
 }
@@ -149,6 +150,7 @@ button:hover, button:focus {
     background: var(--btn-end);
     color: #fff;
 }
+
 #startWorkoutBtn.end:hover {
     background: var(--btn-end-hover);
 }
@@ -157,6 +159,7 @@ button:hover, button:focus {
     background: var(--btn-save);
     color: #fff;
 }
+
 #saveWorkoutBtn:hover {
     background: var(--btn-save-hover);
 }
@@ -165,6 +168,7 @@ button:hover, button:focus {
     background: var(--btn-end);
     color: #fff;
 }
+
 #cancelEditBtn:hover, .delete-btn:hover {
     background: var(--btn-end-hover);
 }
@@ -173,6 +177,7 @@ button:hover, button:focus {
     background: var(--btn-bg);
     color: var(--btn-fg);
 }
+
 .addExerciseBtn:hover, #addExerciseBtn:hover, #addBreakBtn:hover {
     background: var(--btn-hover);
 }
@@ -181,6 +186,7 @@ button:hover, button:focus {
     background: var(--btn-edit);
     color: #fff;
 }
+
 .edit-btn:hover {
     background: var(--btn-edit-hover);
 }
@@ -209,68 +215,36 @@ th, td {
 
 }
 
-
-
 /* Done column hidden until workout running */
-
 .done-col {
-
 	display: none;
-
 	width: 44px;
-
 }
-
-
 
 .show-workout .done-col {
-
 	display: table-cell;
-
 }
-
-
 
 /* row states */
-
 .exercise-done {
-
 	background: rgba(0, 255, 0, 0.12);
-
 }
-
-
 
 .break-done {
-
 	background: rgba(0, 255, 0, 0.12);
-
 }
-
-
 
 .break-warning {
-
 	background: rgba(255, 200, 0, 0.16);
-
 }
-
-
 
 .flash-bg {
-
 	animation: flash-bg 1s step-start infinite;
-
 }
 
-
-
 @keyframes flash-bg {
-
 	0%   { background-color: inherit; }
-
 	50%  { background-color: rgba(255, 0, 0, 0.16); }
-
 	100% { background-color: inherit; }
 }
 
