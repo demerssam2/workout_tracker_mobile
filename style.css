@@ -278,6 +278,7 @@ th, td {
 	justify-content: center;
 	align-items: center;
 	padding: 20px;
+	z-index: 1000; /* Add this */
 }
 
 .modal {
@@ -288,6 +289,7 @@ th, td {
 	width: 100%;
 	max-width: 420px;
 	border: 1px solid var(--border);
+	z-index: 1001; /* Add this */
 }
 
 .modal .row {
@@ -352,4 +354,27 @@ th, td {
 
 .history-entry .delete-btn {
     margin-right: 0;
+}
+
+/* Progress charts: single canvas layout */
+.progress-panel {
+    position: relative;
+    max-width: 640px;
+    margin: 0 auto;
+    /* reserve reasonable min-height so History doesn't overlap while chart loads */
+    min-height: 220px;
+}
+
+.progress-panel canvas {
+    display: block;
+    width: 100% !important;
+    height: auto !important; /* let Chart.js set internal pixel buffer */
+    aspect-ratio: 2 / 1;      /* default visual aspect — Chart.js will adjust */
+    margin: 0 auto;
+    z-index: 1;
+}
+
+/* Slightly shorter chart on small screens */
+@media (max-width: 480px) {
+    .progress-panel canvas { aspect-ratio: 1.5 / 1; }
 }
