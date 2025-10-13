@@ -123,7 +123,7 @@ function addExercise(ex = {}) {
     }
     rowHtml += '\
         <td class="exercise-cell"><input type="text" placeholder="Exercise" value="' + escapeHtml(ex.name || '') + '"></td>\
-        <td class="sets-cell"><input type="number" min="1" value="' + (ex.sets || 3) + '"></td>\
+        <!-- <td class="sets-cell"><input type="number" min="1" value="' + (ex.sets || 3) + '"></td> -->\
         <td class="reps-cell"><input type="number" min="1" value="' + (ex.reps ?? 10) + '"></td>\
         <td class="weight-cell">\
             <div class="weight-line">\
@@ -616,7 +616,6 @@ function saveWorkout() {
 			return { type: 'break', duration: planned, time: secs };
 		} else {
 			const name = r.querySelector('.exercise-cell input')?.value || '';
-			const sets = parseInt(r.querySelector('.sets-cell input')?.value || 0) || 0;
 			const reps = parseInt(r.querySelector('.reps-cell input')?.value || 0) || 0;
 			let weights = [];
 			if (r.querySelector('.dropset-checkbox')?.checked) {
@@ -630,7 +629,6 @@ function saveWorkout() {
 			return {
 				type: 'exercise',
 				name,
-				sets,
 				reps,
 				weights,
 				unit,
@@ -756,12 +754,13 @@ function renderHistory() {
 		table.className = 'history-table';
 		const thead = document.createElement('tr');
 		thead.innerHTML = '\
-			<th>Time</th>\
-			<th>Exercise</th>\
-			<th>Sets x Reps</th>\
-			<th>Weight</th>\
-			<th>Difficulty</th>\
-			<th>Notes</th>';
+    <th>Time</th>\
+    <th>Exercise</th>\
+    <!-- <th>Sets x Reps</th> -->\
+    <th>Reps</th>\
+    <th>Weight</th>\
+    <th>Difficulty</th>\
+    <th>Notes</th>';
 		table.appendChild(thead);
 
 		(workout.exercises || []).forEach(ex => {
@@ -769,13 +768,14 @@ function renderHistory() {
 			if (ex.type === 'break') {
 				tr.innerHTML = '<td>' + formatTime(ex.time || 0) + '</td><td colspan="5" style="text-align:center; font-style:italic;">Break: ' + (ex.duration || 0) + ' sec</td>';
 			} else {
-				const repsDisplay = (ex.sets || 0) + 'x' + (ex.reps || 0);
+				// const repsDisplay = (ex.sets || 0) + 'x' + (ex.reps || 0); // REMOVE
+				const repsDisplay = ex.reps || 0;
 				const weightsDisplay = ex.dropset ? (Array.isArray(ex.weights) ? ex.weights.join(' → ') : ex.weights) : (Array.isArray(ex.weights) ? ex.weights[0] : ex.weights);
 				const unit = ex.unit || settings.defaultUnit;
 				const difficultyDisplay = (ex.difficulty != null ? ex.difficulty : '—');
 				tr.innerHTML = '<td>' + formatTime(ex.time || 0) + '</td>' +
 					'<td>' + escapeHtml(ex.name || '') + '</td>' +
-					'<td>' + escapeHtml(repsDisplay) + '</td>' +
+					'<td>' + escapeHtml(String(repsDisplay)) + '</td>' +
 					'<td>' + escapeHtml(String(weightsDisplay || '0')) + ' ' + escapeHtml(unit) + (ex.dropset ? ' (dropset)' : '') + '</td>' +
 					'<td>' + escapeHtml(String(difficultyDisplay)) + '/10</td>' +
 					'<td>' + escapeHtml(ex.notes || '') + '</td>';
