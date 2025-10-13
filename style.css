@@ -1,25 +1,51 @@
 :root {
-	--bg: #f4f4f4;
-	--fg: #111;
-	--panel: #fff;
-	--border: #ccc;
-	--muted: #eee;
-	--backdrop: rgba(0,0,0,0.4);
-	--btn-bg: #e0e0e0;
-	--btn-fg: #111;
-	--btn-hover: #d0d0d0;
+    --bg: #f7f9fb;
+    --fg: #222;
+    --panel: #fff;
+    --border: #dbeafe;
+    --muted: #e0e7ef;
+    --backdrop: rgba(30,41,59,0.18);
+
+    --btn-bg: #e0e7ef;
+    --btn-fg: #222;
+    --btn-hover: #cbd5e1;
+
+    --btn-start: #22c55e;
+    --btn-start-hover: #16a34a;
+
+    --btn-save: #2563eb;
+    --btn-save-hover: #1d4ed8;
+
+    --btn-end: #ef4444;
+    --btn-end-hover: #dc2626;
+
+    --btn-edit: #38bdf8;
+    --btn-edit-hover: #0ea5e9;
 }
 
 body.dark {
-	--bg: #1e1e1e;
-	--fg: #e5e5e5;
-	--panel: #2a2a2a;
-	--border: #444;
-	--muted: #3a3a3a;
-	--backdrop: rgba(0,0,0,0.6);
-	--btn-bg: #333;
-	--btn-fg: #e5e5e5;
-	--btn-hover: #444;
+    --bg: #18181b;
+    --fg: #e5e7eb;
+    --panel: #23272f;
+    --border: #334155;
+    --muted: #1e293b;
+    --backdrop: rgba(30,41,59,0.45);
+
+    --btn-bg: #334155;
+    --btn-fg: #e5e7eb;
+    --btn-hover: #475569;
+
+    --btn-start: #22c55e;
+    --btn-start-hover: #16a34a;
+
+    --btn-save: #2563eb;
+    --btn-save-hover: #1d4ed8;
+
+    --btn-end: #ef4444;
+    --btn-end-hover: #dc2626;
+
+    --btn-edit: #38bdf8;
+    --btn-edit-hover: #0ea5e9;
 }
 
 * {
@@ -59,9 +85,9 @@ h2 {
 	background: var(--panel);
 	border: 1px solid var(--border);
 	border-radius: 10px;
-	padding: 10px;
+	padding: 8px;
 	width: 100%;
-	max-width: 600px;
+	max-width: 640px;
 	margin: 0 auto;
 }
 
@@ -72,26 +98,91 @@ h2 {
 }
 
 .buttons {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 8px;
-	justify-content: center;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+    justify-content: stretch;
+    width: 100%;
+    max-width: 100%;
+}
+
+.buttons button {
+    width: 100%;
+    margin: 0;
+    min-width: 0; /* Prevent overflow */
+    box-sizing: border-box;
 }
 
 button {
-	padding: 12px 14px;
-	font: inherit;
-	border-radius: 8px;
-	border: 1px solid var(--border);
-	background: var(--btn-bg);
-	color: var(--btn-fg);
-	cursor: pointer;
-	flex: 1 1 45%;
-	max-width: 48%;
+    padding: 12px 20px;
+    font: inherit;
+    border-radius: 10px;
+    border: none;
+    background: var(--btn-bg);
+    color: var(--btn-fg);
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 1rem;
+    transition: background 0.18s, box-shadow 0.18s;
+    box-shadow: 0 1px 3px rgba(30,41,59,0.08);
+    margin: 4px 0;
 }
 
-button:hover {
-	background: var(--btn-hover);
+button:hover, button:focus {
+    background: var(--btn-hover);
+    outline: none;
+}
+
+#startWorkoutBtn {
+    background: var(--btn-start);
+    color: #fff;
+    transition: background 0.18s;
+}
+#startWorkoutBtn:hover {
+    background: var(--btn-start-hover);
+}
+
+/* When workout is active, turn the button red */
+#startWorkoutBtn.end {
+    background: var(--btn-end);
+    color: #fff;
+}
+#startWorkoutBtn.end:hover {
+    background: var(--btn-end-hover);
+}
+
+#saveWorkoutBtn {
+    background: var(--btn-save);
+    color: #fff;
+}
+#saveWorkoutBtn:hover {
+    background: var(--btn-save-hover);
+}
+
+#cancelEditBtn, .delete-btn {
+    background: var(--btn-end);
+    color: #fff;
+}
+#cancelEditBtn:hover, .delete-btn:hover {
+    background: var(--btn-end-hover);
+}
+
+.addExerciseBtn, #addExerciseBtn, #addBreakBtn {
+    background: var(--btn-bg);
+    color: var(--btn-fg);
+}
+.addExerciseBtn:hover, #addExerciseBtn:hover, #addBreakBtn:hover {
+    background: var(--btn-hover);
+}
+
+.edit-btn {
+    background: var(--btn-edit);
+    color: #fff;
+}
+.edit-btn:hover {
+    background: var(--btn-edit-hover);
 }
 
 .table-wrapper {
@@ -105,13 +196,82 @@ button:hover {
 table {
 	width: 100%;
 	border-collapse: collapse;
-	min-width: 800px;
+	min-width: 900px;
 }
 
 th, td {
 	border: 1px solid var(--border);
 	padding: 8px;
 	text-align: left;
+	vertical-align: top;
+
+	word-wrap: break-word;
+
+}
+
+
+
+/* Done column hidden until workout running */
+
+.done-col {
+
+	display: none;
+
+	width: 44px;
+
+}
+
+
+
+.show-workout .done-col {
+
+	display: table-cell;
+
+}
+
+
+
+/* row states */
+
+.exercise-done {
+
+	background: rgba(0, 255, 0, 0.12);
+
+}
+
+
+
+.break-done {
+
+	background: rgba(0, 255, 0, 0.12);
+
+}
+
+
+
+.break-warning {
+
+	background: rgba(255, 200, 0, 0.16);
+
+}
+
+
+
+.flash-bg {
+
+	animation: flash-bg 1s step-start infinite;
+
+}
+
+
+
+@keyframes flash-bg {
+
+	0%   { background-color: inherit; }
+
+	50%  { background-color: rgba(255, 0, 0, 0.16); }
+
+	100% { background-color: inherit; }
 }
 
 .settings-btn {
@@ -165,37 +325,57 @@ th, td {
 
 /* History buttons */
 .history-btns {
-	display: flex;
-	gap: 6px;
-	justify-content: center;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 10px;
+    margin-bottom: 4px;
 }
 
 .history-btns button {
-	flex: 0 0 auto;
-	padding: 6px 10px;
-	font-size: 13px;
-	border-radius: 6px;
-	border: none;
+    flex: 0 0 auto;
+    padding: 10px 22px;
+    font-size: 1rem;
+    border-radius: 10px;
+    border: none;
+    font-weight: 500;
+    box-shadow: 0 1px 3px rgba(30,41,59,0.08);
+    transition: background 0.18s;
 }
 
-button.edit-btn {
-	background: #4da3ff;
-	color: #fff;
+/* Add spacing between history entries */
+.history-entry {
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--muted);
 }
 
-button.delete-btn {
-	background: #ff4d4d;
-	color: #fff;
+/* Remove border for last entry */
+.history-entry:last-child {
+    margin-bottom: 0;
+    border-bottom: none;
 }
 
-.history-panel .table-wrapper {
-	overflow-x: auto;
-	width: 100%;
-	border-radius: 8px;
-	border: 1px solid var(--border);
-	-webkit-overflow-scrolling: touch;
+/* Increase gap between history buttons */
+.history-btns {
+    gap: 18px;
+    margin-top: 16px;
+    margin-bottom: 8px;
 }
 
-.history-panel table {
-	min-width: 800px;
+/* Add spacing between edit and delete buttons in history entries */
+.history-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 6px;
+}
+
+/* If you don't have a container, target the buttons directly */
+.history-entry .edit-btn,
+.history-entry .delete-btn {
+    margin-right: 8px;
+}
+
+.history-entry .delete-btn {
+    margin-right: 0;
 }

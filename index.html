@@ -10,11 +10,10 @@
 <body>
 	<button id="settingsBtn" class="settings-btn" aria-label="Open settings">⚙️</button>
 	<h1>Workout Tracker</h1>
-
 	<div class="container">
 		<div class="main-panel">
 			<h2>Log Workout</h2>
-			<div id="workoutTotalTimer" class="total-timer">Total Time: 00:00</div>
+			<div id="workoutTotalTimer" class="total-timer" style="display:none;">Total Time: 00:00</div>
 			<div class="buttons">
 				<button id="addExerciseBtn">+ Exercise</button>
 				<button id="addBreakBtn">+ Break</button>
@@ -22,10 +21,9 @@
 				<button id="saveWorkoutBtn">Save</button>
 				<button id="cancelEditBtn" style="display:none;">Cancel Edit</button>
 			</div>
-			<div style="margin-top:8px;"></div>
 			<div class="table-wrapper">
 				<table id="workoutTable">
-					<tr>
+					<tr id="headerRow">
 						<th>Exercise</th>
 						<th>Sets</th>
 						<th>Reps</th>
