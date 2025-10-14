@@ -1,7 +1,3 @@
-// script.js
-// Full working workout logic for mobile-first UI
-// Updated: Single-canvas chart system (fixes layout offset bug)
-
 'use strict';
 
 const STORAGE_SETTINGS_KEY = 'wt_settings_v1';
@@ -25,11 +21,9 @@ let rowTimers = [];
 function persistSettings() {
 	localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(settings));
 }
-
 function persistWorkouts() {
 	localStorage.setItem(STORAGE_WORKOUTS_KEY, JSON.stringify(workouts));
 }
-
 function formatTime(secs) {
 	const s = Math.max(0, parseInt(secs) || 0);
 	const h = Math.floor(s / 3600);
@@ -37,7 +31,6 @@ function formatTime(secs) {
 	const ss = (s % 60).toString().padStart(2, '0');
 	return h > 0 ? `${h}:${m}:${ss}` : `${m}:${ss}`;
 }
-
 function escapeHtml(str) {
 	if (str == null) return '';
 	return String(str)
@@ -47,11 +40,9 @@ function escapeHtml(str) {
 		.replace(/"/g, '&quot;')
 		.replace(/'/g, '&#039;');
 }
-
 function applyAppearance() {
 	document.body.classList.toggle('dark', settings.appearance === 'dark');
 }
-
 // Row helpers ---------------------------------------------------------
 function createDoneButtonForRow(row) {
 	let doneCell = row.querySelector('.done-col-cell');
@@ -71,7 +62,6 @@ function createDoneButtonForRow(row) {
 	doneCell.appendChild(btn);
 	return btn;
 }
-
 function addRowListeners(row) {
 	const slider = row.querySelector('.difficulty-slider');
 	const sliderValue = row.querySelector('.difficulty-value');
@@ -87,7 +77,6 @@ function addRowListeners(row) {
 	const repsInput = row.querySelector('.reps-cell input[type="number"]');
 	if (repsInput) repsInput.addEventListener('input', () => updateDropSetInputs(repsInput));
 }
-
 // Add exercise / break ------------------------------------------------
 function addExercise(ex = {}) {
 	const table = document.getElementById('workoutTable');
@@ -134,7 +123,6 @@ function addExercise(ex = {}) {
 		if (cb) toggleDropSet(cb, ex.weights);
 	}
 }
-
 function addBreak(br = {}) {
 	const table = document.getElementById('workoutTable');
 	const row = table.insertRow(-1);
@@ -160,7 +148,6 @@ function addBreak(br = {}) {
 
 	if (workoutStarted) createDoneButtonForRow(row);
 }
-
 // Dropset helpers -----------------------------------------------------
 function toggleDropSet(checkbox, restoreValues = []) {
 	const row = checkbox.closest('tr');
@@ -188,7 +175,6 @@ function toggleDropSet(checkbox, restoreValues = []) {
 		if (restoreValues.length && singleWeight) singleWeight.value = restoreValues[0];
 	}
 }
-
 function updateDropSetInputs(repsInput) {
 	const row = repsInput.closest('tr');
 	if (!row) return;
@@ -210,7 +196,6 @@ function updateDropSetInputs(repsInput) {
 		for (let i = current.length - 1; i >= newCount; i--) container.removeChild(current[i]);
 	}
 }
-
 // Row stopwatch / timers ---------------------------------------------
 function ensureTimeDisplayOnRow(row) {
 	if (!row.querySelector('.time-display')) {
@@ -222,7 +207,6 @@ function ensureTimeDisplayOnRow(row) {
 		row.appendChild(td);
 	}
 }
-
 function startRowTimer(index) {
 	const rows = Array.from(document.getElementById('workoutTable').rows).slice(1);
 	if (index < 0 || index >= rows.length) return;
@@ -242,7 +226,6 @@ function startRowTimer(index) {
 	}, 1000);
 	activeRowIndex = index;
 }
-
 function stopRowTimer(index) {
 	if (rowTimers[index]) {
 		clearInterval(rowTimers[index]);
@@ -250,12 +233,10 @@ function stopRowTimer(index) {
 	}
 	if (activeRowIndex === index) activeRowIndex = null;
 }
-
 function computeTotalFromRows() {
 	const rows = Array.from(document.getElementById('workoutTable').rows).slice(1);
 	return rows.reduce((sum, r) => sum + (parseInt(r.querySelector('.time-display')?.dataset.seconds || '0') || 0), 0);
 }
-
 // Global workout timer ------------------------------------------------
 function startWorkoutTimer() {
 	const display = document.getElementById('workoutTotalTimer');
@@ -266,14 +247,12 @@ function startWorkoutTimer() {
 		display.textContent = 'Total Time: ' + formatTime(workoutSeconds);
 	}, 1000);
 }
-
 function stopWorkoutTimer() {
 	if (workoutTimer) {
 		clearInterval(workoutTimer);
 		workoutTimer = null;
 	}
 }
-
 // Break countdown behavior -------------------------------------------
 function startBreakCountdown(breakRow) {
 	const cell = breakRow.querySelector('.break-cell');
@@ -378,7 +357,6 @@ function startBreakCountdown(breakRow) {
 	updateDisplay();
 	restartCountdown();
 }
-
 // Completing a row ----------------------------------------------------
 function completeRow(row) {
 	const table = document.getElementById('workoutTable');
@@ -417,7 +395,6 @@ function completeRow(row) {
 		document.body.classList.remove('show-workout');
 	}
 }
-
 // Start / End workout -------------------------------------------------
 function startWorkout() {
 	const btn = document.getElementById('startWorkoutBtn');
@@ -487,7 +464,6 @@ function startWorkout() {
 
 	startWorkoutTimer();
 }
-
 function endWorkout() {
 	rowTimers.forEach((id, i) => { if (id) clearInterval(id); rowTimers[i] = null; });
 	activeRowIndex = null;
@@ -503,7 +479,6 @@ function endWorkout() {
 		if (doneBtn) doneBtn.style.display = 'none';
 	});
 }
-
 // Save / Edit / Delete / Cancel ---------------------------------------
 function saveWorkout() {
 	endWorkout();
@@ -580,7 +555,6 @@ function saveWorkout() {
 	btn.dataset.active = 'false';
 	btn.classList.remove('end');
 }
-
 function editWorkout(index) {
 	const table = document.getElementById('workoutTable');
 	table.innerHTML = table.rows[0].outerHTML;
@@ -607,7 +581,6 @@ function editWorkout(index) {
 		}
 	});
 }
-
 function deleteWorkout(index) {
 	if (!confirm('Are you sure you want to delete this workout?')) return;
 	workouts.splice(index, 1);
@@ -616,7 +589,6 @@ function deleteWorkout(index) {
 	updateExerciseSelector();
 	renderProgress();
 }
-
 function cancelEdit() {
 	editIndex = null;
 	document.getElementById('cancelEditBtn').style.display = 'none';
@@ -625,7 +597,6 @@ function cancelEdit() {
 	workoutStarted = false;
 	workoutSeconds = 0;
 }
-
 // History & Progress --------------------------------------------------
 function renderHistory() {
 	const historyDiv = document.getElementById('history');
@@ -694,7 +665,6 @@ function renderHistory() {
 		historyDiv.appendChild(div);
 	});
 }
-
 function updateExerciseSelector() {
 	const select = document.getElementById('exerciseSelect');
 	if (!select) return;
@@ -718,17 +688,14 @@ function updateExerciseSelector() {
 	});
 	select.value = Array.from(select.querySelectorAll('option')).some(o => o.value === current) ? current : '__all';
 }
-
 // --------------------------------------------------------------------
 // New unified chart system (single canvas)
 // --------------------------------------------------------------------
-
 function chartColors() {
 	return settings.appearance === 'dark'
 		? { grid: '#555', tick: '#ccc', legend: '#ddd' }
 		: { grid: '#ddd', tick: '#333', legend: '#111' };
 }
-
 function buildProgressData(selected) {
 	let labels = [];
 	let difficultyData = [];
@@ -793,7 +760,6 @@ function buildProgressData(selected) {
 	}
 	return { labels, difficultyData, weightData, durationData, breakData };
 }
-
 function createOrUpdateProgressChart(type, labels, data, datasetLabel) {
 	const canvas = document.getElementById('progressChart');
 	if (!canvas) return;
@@ -834,7 +800,6 @@ function createOrUpdateProgressChart(type, labels, data, datasetLabel) {
 		} catch {}
 	}, 60);
 }
-
 function renderProgress() {
 	updateExerciseSelector();
 	const selected = document.getElementById('exerciseSelect')?.value || '__all';
@@ -868,7 +833,6 @@ function renderProgress() {
 		}
 	}, 80);
 }
-
 // Keep chart responsive if canvas size changes
 let panelResizeObserver = null;
 function attachPanelResizeObserver() {
@@ -882,7 +846,6 @@ function attachPanelResizeObserver() {
 	});
 	panelResizeObserver.observe(canvas);
 }
-
 // Initial wiring ------------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
 	applyAppearance();
@@ -917,4 +880,21 @@ document.addEventListener('DOMContentLoaded', () => {
 	updateExerciseSelector();
 	renderProgress();
 	attachPanelResizeObserver();
+	
+	// --- Tab Navigation ---
+	const tabButtons = document.querySelectorAll('.tab-btn');
+	const panels = document.querySelectorAll('.main-panel, .progress-panel, .history-panel');
+	// Default view
+	document.querySelector('.main-panel').classList.add('active');
+	tabButtons.forEach(btn => {
+		btn.addEventListener('click', () => {
+			// Update buttons
+			tabButtons.forEach(b => b.classList.remove('active'));
+			btn.classList.add('active');
+			// Update panels
+			panels.forEach(p => p.classList.remove('active'));
+			const targetPanel = document.querySelector('.' + btn.dataset.target);
+			if (targetPanel) targetPanel.classList.add('active');
+		});
+	});
 });

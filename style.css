@@ -378,3 +378,72 @@ th, td {
 @media (max-width: 480px) {
     .progress-panel canvas { aspect-ratio: 1.5 / 1; }
 }
+
+/* --- Top Tabs Navigation --- */
+.top-tabs {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 99;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.tab-btn {
+  flex: 1;
+  text-align: center;
+  padding: 14px 0;
+  font-weight: 600;
+  font-size: 1rem;
+  background: none;
+  border: none;
+  color: var(--fg);
+  cursor: pointer;
+  transition: color 0.25s, background 0.25s, border-bottom 0.25s;
+}
+
+.tab-btn.active {
+  color: var(--btn-save);
+  border-bottom: 3px solid var(--btn-save);
+}
+
+.tab-btn:hover:not(.active) {
+  background: var(--btn-hover);
+  color: var(--btn-save);
+}
+
+/* Hide all panels by default */
+.main-panel, .progress-panel, .history-panel {
+  display: none;
+}
+
+/* Show only active panel */
+.main-panel.active,
+.progress-panel.active,
+.history-panel.active {
+  display: block;
+  animation: fadeIn 0.25s ease-in-out;
+}
+
+/* --- Dark Mode Enhancements --- */
+body.dark .top-tabs {
+  background: #1f2937; /* slightly lighter than full dark */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+body.dark .tab-btn {
+  color: #e5e7eb;
+}
+
+body.dark .tab-btn.active {
+  color: #60a5fa;
+  border-bottom-color: #60a5fa;
+}
+
+body.dark .tab-btn:hover:not(.active) {
+  background: rgba(255,255,255,0.08);
+  color: #60a5fa;
+}
