@@ -374,6 +374,13 @@ function startBreakCountdown(breakCard) {
       breakCard.classList.remove('break-warning');
       breakCard.classList.add('break-done');
 
+      // *** ADDED FIX: Hide done button on auto-complete ***
+      const doneBtn = breakCard.querySelector('.row-done-btn');
+      if (doneBtn) {
+          doneBtn.style.display = 'none';
+      }
+      // *** END FIX ***
+
       if (breakCard._countdown) {
         clearInterval(breakCard._countdown);
         breakCard._countdown = null;
@@ -470,6 +477,12 @@ function completeRow(card) {
     card.classList.add('exercise-done');
   }
 
+  // Hide the done button
+  const doneBtn = card.querySelector('.row-done-btn');
+  if (doneBtn) {
+    doneBtn.style.display = 'none';
+  }
+
   stopRowTimer(idx);
 
   // start next card's timer and possibly a break
@@ -521,8 +534,11 @@ function startWorkout() {
   // No header to worry about
 
   cards.forEach(card => {
-    const doneBtn = createDoneButton(card);
-    doneBtn.style.display = 'block';
+    // Only show button if not already done
+    if (!card.classList.contains('exercise-done') && !card.classList.contains('break-done')) {
+        const doneBtn = createDoneButton(card);
+        doneBtn.style.display = 'block';
+    }
 
     if (card.classList.contains('break-card')) {
       const inp = card.querySelector('.break-body input[type="number"]');

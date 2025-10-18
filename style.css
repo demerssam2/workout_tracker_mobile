@@ -208,19 +208,22 @@ table {
     /* min-width: 900px; <-- REMOVED */
 }
 
-/* row states */
-.exercise-done {
-	background: rgba(0, 255, 0, 0.08);
+/* *** UPDATED FIX: ***
+  Made selectors more specific (e.g., .workout-card.exercise-done) 
+  to override the base .workout-card background.
+*/
+.workout-card.exercise-done {
+	background: rgba(0, 255, 0, 0.12);
     border-color: var(--btn-start);
 }
 
-.break-done {
-	background: rgba(0, 255, 0, 0.08);
+.workout-card.break-done {
+	background: rgba(0, 255, 0, 0.12);
     border-color: var(--btn-start);
 }
 
-.break-warning {
-	background: rgba(255, 200, 0, 0.1);
+.workout-card.break-warning {
+	background: rgba(255, 200, 0, 0.16);
     border-color: #f59e0b;
 }
 
