@@ -192,50 +192,36 @@ button:hover, button:focus {
 }
 
 .table-wrapper {
-	overflow-x: auto;
+	/* overflow-x: auto;  <-- REMOVED */
+    overflow-x: visible;
 	width: 100%;
 	border-radius: 8px;
-	border: 1px solid var(--border);
+	/* border: 1px solid var(--border); <-- REMOVED */
+    border: none;
 	-webkit-overflow-scrolling: touch;
 }
 
+/* REMOVED all old table, th, td styles */
 table {
 	width: 100%;
 	border-collapse: collapse;
-	min-width: 900px;
-}
-
-th, td {
-	border: 1px solid var(--border);
-	padding: 8px;
-	text-align: left;
-	vertical-align: top;
-
-	word-wrap: break-word;
-
-}
-
-/* Done column hidden until workout running */
-.done-col {
-	display: none;
-	width: 44px;
-}
-
-.show-workout .done-col {
-	display: table-cell;
+    /* min-width: 900px; <-- REMOVED */
 }
 
 /* row states */
 .exercise-done {
-	background: rgba(0, 255, 0, 0.12);
+	background: rgba(0, 255, 0, 0.08);
+    border-color: var(--btn-start);
 }
 
 .break-done {
-	background: rgba(0, 255, 0, 0.12);
+	background: rgba(0, 255, 0, 0.08);
+    border-color: var(--btn-start);
 }
 
 .break-warning {
-	background: rgba(255, 200, 0, 0.16);
+	background: rgba(255, 200, 0, 0.1);
+    border-color: #f59e0b;
 }
 
 .flash-bg {
@@ -428,6 +414,11 @@ th, td {
   animation: fadeIn 0.25s ease-in-out;
 }
 
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 /* --- Dark Mode Enhancements --- */
 body.dark .top-tabs {
   background: #1f2937; /* slightly lighter than full dark */
@@ -446,4 +437,272 @@ body.dark .tab-btn.active {
 body.dark .tab-btn:hover:not(.active) {
   background: rgba(255,255,255,0.08);
   color: #60a5fa;
+}
+
+/* --- NEW CARD STYLES --- */
+
+#workoutListContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.workout-card {
+    background: var(--bg); /* Slightly different from panel */
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(30,41,59,0.08);
+}
+
+.workout-card .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.workout-card .card-title {
+    font-weight: bold;
+    flex: 1;
+}
+
+/* Style for the exercise name input */
+.workout-card .exercise-name-input {
+    font-weight: bold;
+    font-size: 1.1rem;
+    border: none;
+    background: transparent;
+    color: var(--fg);
+    padding: 4px;
+    margin: -4px;
+    width: 100%;
+}
+.workout-card .exercise-name-input:focus {
+    outline: none;
+    background: rgba(0,0,0,0.05);
+}
+body.dark .workout-card .exercise-name-input:focus {
+    background: rgba(255,255,255,0.05);
+}
+
+
+.workout-card .card-actions .row-remove-btn {
+    background: var(--btn-end);
+    color: #fff;
+    padding: 0;
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+    line-height: 28px;
+    border-radius: 50%;
+    margin: 0;
+}
+.workout-card .card-actions .row-remove-btn:hover {
+    background: var(--btn-end-hover);
+}
+
+.workout-card .card-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2-column layout */
+    gap: 10px;
+    padding: 12px;
+}
+
+.workout-card .card-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.workout-card .card-field label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--fg);
+    opacity: 0.7;
+}
+
+/* Make weight and notes full-width */
+.workout-card .weight-field,
+.workout-card .notes-field {
+    grid-column: 1 / -1;
+}
+
+/* Inputs */
+.workout-card input[type="text"],
+.workout-card input[type="number"],
+.workout-card select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--fg);
+    font-size: 1rem;
+}
+body.dark .workout-card input,
+body.dark .workout-card select {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+.difficulty-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.difficulty-control .difficulty-value {
+    font-weight: bold;
+    min-width: 20px;
+    text-align: right;
+}
+.difficulty-control input[type="range"] {
+    padding: 0;
+}
+
+.weight-line {
+    display: flex;
+    gap: 8px;
+}
+.weight-line .single-weight { flex: 2; }
+.weight-line .unit-select { flex: 1; }
+
+.dropset-label {
+    font-size: 12px;
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.dropset-label input { width: auto; }
+
+.dropset-inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.workout-card .card-footer {
+    padding: 10px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.workout-card .time-cell {
+    text-align: center;
+    font-weight: bold;
+    color: var(--fg);
+    opacity: 0.8;
+    font-size: 0.9rem;
+}
+
+.row-done-btn { /* Style the new done button */
+    background: var(--btn-start);
+    color: #fff;
+    padding: 10px;
+    font-size: 1rem;
+    width: 100%;
+}
+.row-done-btn:hover {
+    background: var(--btn-start-hover);
+}
+
+/* Break card specifics */
+.break-card .card-title {
+    color: var(--fg);
+    opacity: 0.8;
+}
+.break-card .break-body {
+    grid-template-columns: 1fr; /* Single column */
+    font-size: 1.1rem;
+    align-items: center;
+}
+.break-card .break-body input {
+    display: inline-block;
+    width: 80px;
+    margin: 0 6px;
+}
+
+/* Break countdown styles */
+.break-countdown {
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-align: center;
+    display: block;
+    margin-bottom: 10px;
+}
+.break-body button.small {
+    padding: 6px 8px;
+    font-size: 0.9rem;
+    margin: 2px;
+    width: auto;
+}
+
+/* --- NEW HISTORY CARD STYLES --- */
+.history-exercise-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.history-card {
+    display: flex;
+    gap: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    align-items: center;
+}
+
+.history-card .hist-time {
+    flex-shrink: 0;
+    font-weight: bold;
+    font-size: 0.9rem;
+    width: 60px; /* Fixed width for time */
+    text-align: center;
+    color: var(--btn-save);
+}
+
+.history-card.break-card .hist-time {
+    color: var(--fg);
+    opacity: 0.7;
+}
+
+.history-card .hist-details {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow: hidden; /* Prevents long text from breaking layout */
+}
+
+.history-card .hist-name {
+    font-size: 1.1rem;
+}
+
+.history-card .hist-stats {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping on super small screens */
+    gap: 10px;
+    font-size: 0.9rem;
+}
+
+.history-card .hist-stats span {
+    opacity: 0.9;
+}
+.history-card .hist-stats span strong {
+    opacity: 0.8;
+}
+
+.history-card .hist-notes {
+    font-size: 0.9rem;
+    font-style: italic;
+    opacity: 0.8;
+    white-space: pre-wrap;
+    word-break: break-word;
 }

@@ -8,6 +8,7 @@
   - Fixes break "skip" bug by tracking actual elapsed seconds on each break row
   - Cleaner separation of concerns, fewer globals, more helper functions
   - Uses const/let, arrow functions, and clearer variable naming
+  - *** MODIFIED to use a mobile-first "card" layout instead of tables ***
 */
 
 const STORAGE_SETTINGS_KEY = 'wt_settings_v1';
@@ -62,50 +63,59 @@ function applyAppearance() {
   document.body.classList.toggle('dark', App.settings.appearance === 'dark');
 }
 
-// ---------- Row construction ----------
-function ensureTimeCell(row) {
-  let timeCell = row.querySelector('.time-cell');
+// ---------- Row construction (Card-based) ----------
+function ensureTimeCell(card) {
+  let footer = card.querySelector('.card-footer');
+  if (!footer) {
+    footer = create('div', { class: 'card-footer' });
+    card.appendChild(footer);
+  }
+  let timeCell = footer.querySelector('.time-cell');
   if (!timeCell) {
-    timeCell = create('td', { class: 'time-cell', html: '' });
+    timeCell = create('div', { class: 'time-cell' });
     const display = create('span', { class: 'time-display', 'data-seconds': 0 }, fmtTime(0));
     timeCell.appendChild(display);
-    row.appendChild(timeCell);
+    footer.appendChild(timeCell);
   }
-  return row.querySelector('.time-display');
+  return footer.querySelector('.time-display');
 }
 
-function createDoneButton(row) {
-  let doneCell = row.querySelector('.done-col-cell');
-  if (!doneCell) {
-    doneCell = create('td', { class: 'done-col-cell' });
-    row.insertBefore(doneCell, row.firstChild);
+function createDoneButton(card) {
+  let footer = card.querySelector('.card-footer');
+  if (!footer) {
+    footer = create('div', { class: 'card-footer' });
+    card.appendChild(footer);
   }
-  doneCell.innerHTML = '';
-  const btn = create('button', { type: 'button', class: 'row-done-btn', textContent: '✓' });
+  
+  // Remove existing button if any
+  let oldBtn = footer.querySelector('.row-done-btn');
+  if (oldBtn) oldBtn.remove();
+  
+  const btn = create('button', { type: 'button', class: 'row-done-btn', textContent: '✓ Mark Done' });
   btn.title = 'Mark done';
-  btn.style.display = App.workoutStarted ? 'inline-block' : 'none';
-  btn.addEventListener('click', () => completeRow(row));
-  doneCell.appendChild(btn);
+  btn.style.display = App.workoutStarted ? 'block' : 'none';
+  btn.style.width = '100%';
+  btn.addEventListener('click', () => completeRow(card));
+  footer.prepend(btn); // Prepend to put it before the timer
   return btn;
 }
 
-function wireRowControls(row) {
-  const slider = row.querySelector('.difficulty-slider');
-  const sliderVal = row.querySelector('.difficulty-value');
+function wireRowControls(card) {
+  const slider = card.querySelector('.difficulty-slider');
+  const sliderVal = card.querySelector('.difficulty-value');
   if (slider && sliderVal) slider.addEventListener('input', () => { sliderVal.textContent = slider.value; });
 
-  const dropsetCb = row.querySelector('.dropset-checkbox');
+  const dropsetCb = card.querySelector('.dropset-checkbox');
   if (dropsetCb) dropsetCb.addEventListener('change', e => toggleDropSet(e.target));
 
-  const repsInput = row.querySelector('.reps-cell input[type="number"]');
+  const repsInput = card.querySelector('.reps-field input[type="number"]');
   if (repsInput) repsInput.addEventListener('input', () => updateDropSetInputs(repsInput));
 }
 
-// Add exercise row (used both for UI add and when loading saved workout)
+// Add exercise card
 function addExercise(ex = {}) {
-  const table = $('workoutTable');
-  const row = table.insertRow(-1);
-  row.className = 'exercise-row';
+  const container = $('workoutListContainer');
+  const card = create('div', { class: 'workout-card exercise-card' });
 
   const name = escapeHtml(ex.name || '');
   const reps = ex.reps ?? 10;
@@ -114,104 +124,133 @@ function addExercise(ex = {}) {
   const unit = (ex.unit || App.settings.defaultUnit) === 'kg' ? 'kg' : 'lbs';
   const dropset = !!ex.dropset;
 
-  let html = '';
-  if (App.workoutStarted) html += '<td class="done-col-cell"></td>';
-  html += `
-    <td class="exercise-cell"><input type="text" placeholder="Exercise" value="${name}"></td>
-    <td class="reps-cell"><input type="number" min="1" value="${reps}"></td>
-    <td class="weight-cell">
-      <div class="weight-line">
-        <input type="number" min="0" class="single-weight" value="${dropset ? '' : (Array.isArray(ex.weights) ? (ex.weights[0] ?? 0) : (ex.weight ?? 0))}">
-        <select class="unit-select">
-          <option value="kg"${unit === 'kg' ? ' selected' : ''}>kg</option>
-          <option value="lbs"${unit === 'lbs' ? ' selected' : ''}>lbs</option>
-        </select>
-        <label style="font-size:12px;"><input type="checkbox" class="dropset-checkbox"${dropset ? ' checked' : ''}> dropset</label>
+  // Card structure
+  let html = `
+    <div class="card-header">
+      <div class="card-title">
+        <input type="text" class="exercise-name-input" placeholder="Exercise" value="${name}">
       </div>
-      <div class="dropset-inputs" style="display:${dropset ? '' : 'none'}"></div>
-    </td>
-    <td class="difficulty-cell">
-      <input type="range" min="1" max="10" value="${difficulty}" class="difficulty-slider">
-      <span class="difficulty-value">${difficulty}</span>
-    </td>
-    <td class="notes-cell"><input type="text" placeholder="Notes" value="${notes}"></td>
-    <td class="remove-col"></td>`;
+      <div class="card-actions">
+        </div>
+    </div>
+    <div class="card-body">
+      <div class="card-field reps-field">
+        <label>Reps</label>
+        <input type="number" min="1" value="${reps}">
+      </div>
+      <div class="card-field diff-field">
+        <label>Difficulty</label>
+        <div class="difficulty-control">
+          <input type="range" min="1" max="10" value="${difficulty}" class="difficulty-slider">
+          <span class="difficulty-value">${difficulty}</span>
+        </div>
+      </div>
+      <div class="card-field weight-field">
+        <label>Weight</label>
+        <div class="weight-line">
+          <input type="number" min="0" class="single-weight" value="${dropset ? '' : (Array.isArray(ex.weights) ? (ex.weights[0] ?? 0) : (ex.weight ?? 0))}">
+          <select class="unit-select">
+            <option value="kg"${unit === 'kg' ? ' selected' : ''}>kg</option>
+            <option value="lbs"${unit === 'lbs' ? ' selected' : ''}>lbs</option>
+          </select>
+        </div>
+        <label class="dropset-label"><input type="checkbox" class="dropset-checkbox"${dropset ? ' checked' : ''}> dropset</label>
+        <div class="dropset-inputs" style="display:${dropset ? '' : 'none'}"></div>
+      </div>
+      <div class="card-field notes-field">
+        <label>Notes</label>
+        <input type="text" placeholder="Notes" value="${notes}">
+      </div>
+    </div>
+    <div class="card-footer">
+      </div>
+  `;
 
-  row.innerHTML = html;
+  card.innerHTML = html;
 
+  // Add remove button
   const removeBtn = create('button', { type: 'button', class: 'row-remove-btn', textContent: 'X', title: 'Remove row' });
-  removeBtn.addEventListener('click', () => row.remove());
-  row.querySelector('.remove-col').appendChild(removeBtn);
+  removeBtn.addEventListener('click', () => card.remove());
+  card.querySelector('.card-actions').appendChild(removeBtn);
 
-  if (App.workoutStarted) createDoneButton(row);
-  wireRowControls(row);
+  if (App.workoutStarted) {
+    createDoneButton(card);
+  }
+  wireRowControls(card);
 
   if (dropset && Array.isArray(ex.weights) && ex.weights.length) {
-    const cb = row.querySelector('.dropset-checkbox');
+    const cb = card.querySelector('.dropset-checkbox');
     if (cb) toggleDropSet(cb, ex.weights);
   }
 
-  // restore time if provided (used when editing saved workout)
+  // restore time if provided
   if (ex.time != null) {
-    ensureTimeCell(row).dataset.seconds = parseInt(ex.time, 10) || 0;
-    ensureTimeCell(row).textContent = fmtTime(parseInt(ex.time, 10) || 0);
+    ensureTimeCell(card).dataset.seconds = parseInt(ex.time, 10) || 0;
+    ensureTimeCell(card).textContent = fmtTime(parseInt(ex.time, 10) || 0);
   }
+  
+  container.appendChild(card);
 }
 
+// Add break card
 function addBreak(br = {}) {
-  const table = $('workoutTable');
-  const row = table.insertRow(-1);
-  row.className = 'break-row';
+  const container = $('workoutListContainer');
+  const card = create('div', { class: 'workout-card break-card' });
 
   const duration = parseInt(br.duration || br.plannedDuration || 60, 10) || 60;
-  if (App.workoutStarted) rowHtmlInsertDoneCol(row);
-
-  const colspan = App.workoutStarted ? 7 : 7;
-  row.innerHTML = `<td class="break-cell" colspan="${colspan}" style="text-align:center;">
-    Break: <input type="number" min="1" value="${duration}"> sec
-  </td>`;
-
-  const remBtn = create('button', { type: 'button', class: 'row-remove-btn', textContent: 'X', title: 'Remove break' });
-  remBtn.style.marginLeft = '8px';
-  remBtn.addEventListener('click', () => row.remove());
-  row.querySelector('.break-cell').appendChild(remBtn);
-
+  
   // dataset planned duration
-  row.dataset.plannedDuration = duration;
+  card.dataset.plannedDuration = duration;
 
-  // Setup break runtime tracking values:
-  // paused boolean not needed, but we track _timeLeft, _elapsed, and _countdown interval id
-  row._timeLeft = duration;
-  row._elapsed = br.time != null ? parseInt(br.time, 10) || 0 : 0;
-  row._countdown = null;
+  // Setup break runtime tracking values
+  card._timeLeft = duration;
+  card._elapsed = br.time != null ? parseInt(br.time, 10) || 0 : 0;
+  card._countdown = null;
 
-  if (App.workoutStarted) createDoneButton(row);
+  // Card structure
+  let html = `
+    <div class="card-header">
+      <div class="card-title">
+        Break
+      </div>
+      <div class="card-actions">
+        </div>
+    </div>
+    <div class="card-body break-body">
+      Duration: <input type="number" min="1" value="${duration}"> sec
+    </div>
+    <div class="card-footer">
+      </div>
+  `;
+  
+  card.innerHTML = html;
+  
+  const remBtn = create('button', { type: 'button', class: 'row-remove-btn', textContent: 'X', title: 'Remove break' });
+  remBtn.addEventListener('click', () => card.remove());
+  card.querySelector('.card-actions').appendChild(remBtn);
+
+  if (App.workoutStarted) createDoneButton(card);
+  
   // restore visible time cell if pre-filled
   if (br.time != null) {
-    ensureTimeCell(row).dataset.seconds = row._elapsed;
-    ensureTimeCell(row).textContent = fmtTime(row._elapsed);
+    ensureTimeCell(card).dataset.seconds = card._elapsed;
+    ensureTimeCell(card).textContent = fmtTime(card._elapsed);
   }
-}
-
-function rowHtmlInsertDoneCol(row) {
-  // helper for addBreak if we want to insert a done-col cell before the rest (kept for parity)
-  if (!row.querySelector('.done-col-cell')) {
-    const td = create('td', { class: 'done-col-cell' });
-    row.insertBefore(td, row.firstChild);
-  }
+  
+  container.appendChild(card);
 }
 
 // ---------- Dropset helpers ----------
 function toggleDropSet(checkbox, restoreValues = []) {
-  const row = checkbox.closest('tr');
-  if (!row) return;
-  const dropsetContainer = row.querySelector('.dropset-inputs');
-  const singleWeight = row.querySelector('.single-weight');
-  const repsInput = row.querySelector('.reps-cell input[type="number"]');
+  const card = checkbox.closest('.workout-card');
+  if (!card) return;
+  const dropsetContainer = card.querySelector('.dropset-inputs');
+  const singleWeight = card.querySelector('.single-weight');
+  const repsInput = card.querySelector('.reps-field input[type="number"]');
   if (dropsetContainer) dropsetContainer.innerHTML = '';
 
   if (checkbox.checked) {
-    if (dropsetContainer) dropsetContainer.style.display = '';
+    if (dropsetContainer) dropsetContainer.style.display = 'grid'; // Use grid
     if (singleWeight) singleWeight.style.display = 'none';
     const count = Math.max(1, parseInt(repsInput?.value || 1, 10));
     for (let i = 0; i < count; i++) {
@@ -227,11 +266,11 @@ function toggleDropSet(checkbox, restoreValues = []) {
 }
 
 function updateDropSetInputs(repsInput) {
-  const row = repsInput.closest('tr');
-  if (!row) return;
-  const dropsetCb = row.querySelector('.dropset-checkbox');
+  const card = repsInput.closest('.workout-card');
+  if (!card) return;
+  const dropsetCb = card.querySelector('.dropset-checkbox');
   if (!dropsetCb || !dropsetCb.checked) return;
-  const container = row.querySelector('.dropset-inputs');
+  const container = card.querySelector('.dropset-inputs');
   const current = Array.from(container.querySelectorAll('input'));
   const newCount = Math.max(1, parseInt(repsInput.value || 1, 10));
   if (current.length < newCount) {
@@ -247,12 +286,12 @@ function updateDropSetInputs(repsInput) {
 
 // ---------- Timers per row (stopwatch behavior) ----------
 function startRowTimer(index) {
-  const rows = Array.from($('workoutTable').rows).slice(1);
-  if (index < 0 || index >= rows.length) return;
+  const cards = Array.from($('workoutListContainer').children);
+  if (index < 0 || index >= cards.length) return;
   if (App.activeRowIndex !== null && App.activeRowIndex !== index) stopRowTimer(App.activeRowIndex);
 
-  const row = rows[index];
-  const display = ensureTimeCell(row);
+  const card = cards[index];
+  const display = ensureTimeCell(card);
   let elapsed = parseInt(display.dataset.seconds || '0', 10) || 0;
 
   if (App.rowTimers[index]) clearInterval(App.rowTimers[index]);
@@ -274,8 +313,8 @@ function stopRowTimer(index) {
 }
 
 function computeTotalFromRows() {
-  const rows = Array.from($('workoutTable').rows).slice(1);
-  return rows.reduce((sum, r) => sum + (parseInt(r.querySelector('.time-display')?.dataset.seconds || '0', 10) || 0), 0);
+  const cards = Array.from($('workoutListContainer').children);
+  return cards.reduce((sum, r) => sum + (parseInt(r.querySelector('.time-display')?.dataset.seconds || '0', 10) || 0), 0);
 }
 
 // ---------- Workout global timer ----------
@@ -296,23 +335,21 @@ function stopWorkoutTimer() {
 }
 
 // ---------- Break countdowns (fixed) ----------
-// Important: we track both _timeLeft and _elapsed for each break row
-function startBreakCountdown(breakRow) {
-  const cell = breakRow.querySelector('.break-cell');
+function startBreakCountdown(breakCard) {
+  const cell = breakCard.querySelector('.break-body');
   if (!cell) return;
 
-  const planned = parseInt(breakRow.dataset.plannedDuration || 0, 10) || 60;
-  breakRow.dataset.plannedDuration = planned;
+  const planned = parseInt(breakCard.dataset.plannedDuration || 0, 10) || 60;
+  breakCard.dataset.plannedDuration = planned;
 
   // initialize runtime trackers if missing
-  if (breakRow._timeLeft == null) breakRow._timeLeft = planned;
-  if (breakRow._elapsed == null) breakRow._elapsed = 0;
-  if (breakRow._countdown) {
-    // already running
-    return;
+  if (breakCard._timeLeft == null) breakCard._timeLeft = planned;
+  if (breakCard._elapsed == null) breakCard._elapsed = 0;
+  if (breakCard._countdown) {
+    return; // already running
   }
 
-  ensureTimeCell(breakRow); // ensure there's a time-display
+  ensureTimeCell(breakCard); // ensure there's a time-display
 
   // clean the cell and build UI
   cell.innerHTML = '';
@@ -331,82 +368,75 @@ function startBreakCountdown(breakRow) {
   });
 
   const updateDisplay = () => {
-    const left = breakRow._timeLeft;
+    const left = breakCard._timeLeft;
     if (left <= 0) {
       display.textContent = 'Break complete!';
-      breakRow.classList.remove('break-warning');
-      breakRow.classList.add('break-done');
+      breakCard.classList.remove('break-warning');
+      breakCard.classList.add('break-done');
 
-      if (breakRow._countdown) {
-        clearInterval(breakRow._countdown);
-        breakRow._countdown = null;
+      if (breakCard._countdown) {
+        clearInterval(breakCard._countdown);
+        breakCard._countdown = null;
       }
 
-      // record actual elapsed seconds (this is the fix: use _elapsed not planned)
-      const timeDisplay = breakRow.querySelector('.time-display');
+      // record actual elapsed seconds
+      const timeDisplay = breakCard.querySelector('.time-display');
       if (timeDisplay) {
-        // ensure elapsed is integer
-        timeDisplay.dataset.seconds = parseInt(breakRow._elapsed || 0, 10) || 0;
-        timeDisplay.textContent = fmtTime(parseInt(breakRow._elapsed || 0, 10) || 0);
+        timeDisplay.dataset.seconds = parseInt(breakCard._elapsed || 0, 10) || 0;
+        timeDisplay.textContent = fmtTime(parseInt(breakCard._elapsed || 0, 10) || 0);
       }
 
-      // move to next row (stop this row's timer)
-      const rows = Array.from($('workoutTable').rows).slice(1);
-      const idx = rows.indexOf(breakRow);
+      // move to next row
+      const cards = Array.from($('workoutListContainer').children);
+      const idx = cards.indexOf(breakCard);
       stopRowTimer(idx);
-      if (idx + 1 < rows.length) {
-        const next = rows[idx + 1];
+      if (idx + 1 < cards.length) {
+        const next = cards[idx + 1];
         startRowTimer(idx + 1);
-        if (next.classList.contains('break-row')) {
-          // prepare next break and start it
-          const inp = next.querySelector('.break-cell input[type="number"]');
+        if (next.classList.contains('break-card')) {
+          const inp = next.querySelector('.break-body input[type="number"]');
           if (inp) next.dataset.plannedDuration = parseInt(inp.value || 0, 10) || 0;
           next._timeLeft = parseInt(next.dataset.plannedDuration || 0, 10) || 0;
           next._elapsed = 0;
           startBreakCountdown(next);
         }
-      } else {
-        // no next -> workout might end when last element complete - handled by completeRow chain or start workout logic
       }
     } else {
       display.textContent = 'Break: ' + left + 's';
-      if (left <= 10) breakRow.classList.add('break-warning');
-      else breakRow.classList.remove('break-warning');
+      if (left <= 10) breakCard.classList.add('break-warning');
+      else breakCard.classList.remove('break-warning');
     }
   };
 
   const restartCountdown = () => {
-    if (breakRow._timeLeft > 0 && !breakRow._countdown) {
-      breakRow._countdown = setInterval(() => {
-        breakRow._timeLeft = Math.max(0, breakRow._timeLeft - 1);
-        breakRow._elapsed = (parseInt(breakRow._elapsed, 10) || 0) + 1;
+    if (breakCard._timeLeft > 0 && !breakCard._countdown) {
+      breakCard._countdown = setInterval(() => {
+        breakCard._timeLeft = Math.max(0, breakCard._timeLeft - 1);
+        breakCard._elapsed = (parseInt(breakCard._elapsed, 10) || 0) + 1;
         updateDisplay();
       }, 1000);
     }
   };
 
   btnAdd.addEventListener('click', () => {
-    breakRow._timeLeft = (parseInt(breakRow._timeLeft, 10) || 0) + 10;
+    breakCard._timeLeft = (parseInt(breakCard._timeLeft, 10) || 0) + 10;
     updateDisplay();
     restartCountdown();
   });
   btnSub.addEventListener('click', () => {
-    // subtracting time: if timeLeft goes to 0 instantly, elapsed does not increase except the existing elapsed
-    breakRow._timeLeft = Math.max(0, (parseInt(breakRow._timeLeft, 10) || 0) - 10);
+    breakCard._timeLeft = Math.max(0, (parseInt(breakCard._timeLeft, 10) || 0) - 10);
     updateDisplay();
     restartCountdown();
   });
   btnReset.addEventListener('click', () => {
-    breakRow._timeLeft = parseInt(breakRow.dataset.plannedDuration || 0, 10) || 0;
-    breakRow._elapsed = 0;
+    breakCard._timeLeft = parseInt(breakCard.dataset.plannedDuration || 0, 10) || 0;
+    breakCard._elapsed = 0;
     updateDisplay();
     restartCountdown();
   });
 
   btnSkip.addEventListener('click', () => {
-    // Important: when skipping we want to record only the elapsed seconds so far,
-    // not add planned duration. So set _timeLeft to 0 (to trigger completion) but keep _elapsed as-is.
-    breakRow._timeLeft = 0;
+    breakCard._timeLeft = 0;
     updateDisplay();
   });
 
@@ -415,39 +445,39 @@ function startBreakCountdown(breakRow) {
   restartCountdown();
 }
 
-// ---------- Completing a row ----------
-function completeRow(row) {
-  const table = $('workoutTable');
-  const rows = Array.from(table.rows).slice(1);
-  const idx = rows.indexOf(row);
+// ---------- Completing a row (card) ----------
+function completeRow(card) {
+  const container = $('workoutListContainer');
+  const cards = Array.from(container.children);
+  const idx = cards.indexOf(card);
   if (idx < 0) return;
 
-  if (row.classList.contains('break-row')) {
-    if (row._countdown) {
-      clearInterval(row._countdown);
-      row._countdown = null;
+  if (card.classList.contains('break-card')) {
+    if (card._countdown) {
+      clearInterval(card._countdown);
+      card._countdown = null;
     }
-    row.classList.remove('break-warning');
-    row.classList.add('break-done');
+    card.classList.remove('break-warning');
+    card.classList.add('break-done');
 
-    // ensure the time display records proper elapsed seconds if not already set
-    const td = row.querySelector('.time-display');
+    // ensure the time display records proper elapsed seconds
+    const td = card.querySelector('.time-display');
     if (td) {
-      td.dataset.seconds = parseInt(row._elapsed || 0, 10) || 0;
-      td.textContent = fmtTime(parseInt(row._elapsed || 0, 10) || 0);
+      td.dataset.seconds = parseInt(card._elapsed || 0, 10) || 0;
+      td.textContent = fmtTime(parseInt(card._elapsed || 0, 10) || 0);
     }
   } else {
-    row.classList.add('exercise-done');
+    card.classList.add('exercise-done');
   }
 
   stopRowTimer(idx);
 
-  // start next row's timer and possibly a break
-  if (idx + 1 < rows.length) {
-    const next = rows[idx + 1];
+  // start next card's timer and possibly a break
+  if (idx + 1 < cards.length) {
+    const next = cards[idx + 1];
     startRowTimer(idx + 1);
-    if (next.classList.contains('break-row')) {
-      const inp = next.querySelector('.break-cell input[type="number"]');
+    if (next.classList.contains('break-card')) {
+      const inp = next.querySelector('.break-body input[type="number"]');
       if (inp) next.dataset.plannedDuration = parseInt(inp.value || 0, 10) || 0;
       next._timeLeft = parseInt(next.dataset.plannedDuration || 0, 10) || 0;
       next._elapsed = 0;
@@ -467,8 +497,8 @@ function completeRow(row) {
 // ---------- Start / End workout ----------
 function startWorkout() {
   const btn = $('startWorkoutBtn');
-  const table = $('workoutTable');
-  const rows = Array.from(table.rows).slice(1);
+  const container = $('workoutListContainer');
+  const cards = Array.from(container.children);
 
   if (btn.dataset.active === 'true') {
     // End
@@ -477,48 +507,31 @@ function startWorkout() {
     btn.dataset.active = 'false';
     btn.classList.remove('end');
     document.body.classList.remove('show-workout');
-
-    // clean up done column header & cells
-    const header = $('headerRow');
-    if (header && header.querySelector('.done-col')) header.querySelector('.done-col').remove?.();
-
-    Array.from(table.rows).forEach(r => {
-      const doneCell = r.querySelector('.done-col-cell');
-      if (doneCell) doneCell.remove();
-    });
+    // No header row or done cells to clean up
     return;
   }
 
-  if (!rows.length) {
+  if (!cards.length) {
     alert('Add at least one exercise first.');
     return;
   }
 
   document.body.classList.add('show-workout');
 
-  // ensure header has done-col
-  const header = $('headerRow');
-  if (header && !header.querySelector('.done-col')) {
-    const th = create('th', { class: 'done-col', textContent: '✓' });
-    header.insertBefore(th, header.firstChild);
-  }
+  // No header to worry about
 
-  rows.forEach(r => {
-    if (!r.querySelector('.done-col-cell')) {
-      const td = create('td', { class: 'done-col-cell' });
-      r.insertBefore(td, r.firstChild);
-    }
-    const doneBtn = createDoneButton(r);
-    doneBtn.style.display = 'inline-block';
+  cards.forEach(card => {
+    const doneBtn = createDoneButton(card);
+    doneBtn.style.display = 'block';
 
-    if (r.classList.contains('break-row')) {
-      const inp = r.querySelector('.break-cell input[type="number"]');
-      if (inp) r.dataset.plannedDuration = parseInt(inp.value || 0, 10) || 0;
-      r._timeLeft = parseInt(r.dataset.plannedDuration || 0, 10) || 0;
-      r._elapsed = 0;
+    if (card.classList.contains('break-card')) {
+      const inp = card.querySelector('.break-body input[type="number"]');
+      if (inp) card.dataset.plannedDuration = parseInt(inp.value || 0, 10) || 0;
+      card._timeLeft = parseInt(card.dataset.plannedDuration || 0, 10) || 0;
+      card._elapsed = 0;
     }
 
-    ensureTimeCell(r);
+    ensureTimeCell(card);
   });
 
   btn.textContent = 'End';
@@ -528,10 +541,10 @@ function startWorkout() {
   $('workoutTotalTimer').textContent = 'Total Time: 00:00';
   App.workoutStarted = true;
 
-  // start first row
+  // start first card
   startRowTimer(0);
-  const first = rows[0];
-  if (first && first.classList.contains('break-row')) {
+  const first = cards[0];
+  if (first && first.classList.contains('break-card')) {
     first.dataset.plannedDuration = parseInt(first.dataset.plannedDuration || 0, 10) || 0;
     first._timeLeft = parseInt(first.dataset.plannedDuration || 0, 10) || 0;
     first._elapsed = 0;
@@ -547,18 +560,18 @@ function endWorkout() {
   App.activeRowIndex = null;
 
   // clear break countdowns
-  const rows = Array.from($('workoutTable').rows).slice(1);
-  rows.forEach(r => {
-    if (r._countdown) { clearInterval(r._countdown); r._countdown = null; }
-    r.classList.remove('break-warning');
+  const cards = Array.from($('workoutListContainer').children);
+  cards.forEach(card => {
+    if (card._countdown) { clearInterval(card._countdown); card._countdown = null; }
+    card.classList.remove('break-warning');
   });
 
   stopWorkoutTimer();
   App.workoutStarted = false;
 
   // hide done buttons
-  rows.forEach(r => {
-    const doneBtn = r.querySelector('.done-col-cell button');
+  cards.forEach(card => {
+    const doneBtn = card.querySelector('.row-done-btn');
     if (doneBtn) doneBtn.style.display = 'none';
   });
 }
@@ -568,36 +581,36 @@ function saveWorkout() {
   // end workout to freeze timers
   endWorkout();
 
-  const table = $('workoutTable');
-  const rows = Array.from(table.rows).slice(1);
-  if (!rows.length) { alert('Add at least one exercise!'); return; }
+  const container = $('workoutListContainer');
+  const cards = Array.from(container.children);
+  if (!cards.length) { alert('Add at least one exercise!'); return; }
 
-  const exercises = rows.map(r => {
-    const td = r.querySelector('.time-display');
+  const exercises = cards.map(card => {
+    const td = card.querySelector('.time-display');
     const secs = parseInt(td?.dataset.seconds || 0, 10) || 0;
 
-    if (r.classList.contains('break-row')) {
-      const planned = parseInt(r.dataset.plannedDuration || 0, 10) || (parseInt(r.querySelector('.break-cell input')?.value || 0, 10) || 0);
+    if (card.classList.contains('break-card')) {
+      const planned = parseInt(card.dataset.plannedDuration || 0, 10) || (parseInt(card.querySelector('.break-body input')?.value || 0, 10) || 0);
       return { type: 'break', duration: planned, time: secs };
     } else {
-      const name = r.querySelector('.exercise-cell input')?.value || '';
-      const reps = parseInt(r.querySelector('.reps-cell input')?.value || 0, 10) || 0;
+      const name = card.querySelector('.exercise-name-input')?.value || '';
+      const reps = parseInt(card.querySelector('.reps-field input')?.value || 0, 10) || 0;
       let weights = [];
-      if (r.querySelector('.dropset-checkbox')?.checked) {
-        weights = Array.from(r.querySelectorAll('.dropset-inputs input')).map(i => i.value || 0);
+      if (card.querySelector('.dropset-checkbox')?.checked) {
+        weights = Array.from(card.querySelectorAll('.dropset-inputs input')).map(i => i.value || 0);
       } else {
-        weights = [r.querySelector('.single-weight')?.value || 0];
+        weights = [card.querySelector('.single-weight')?.value || 0];
       }
-      const unit = r.querySelector('.unit-select')?.value || App.settings.defaultUnit;
-      const difficulty = parseInt(r.querySelector('.difficulty-slider')?.value || 0, 10) || 0;
-      const notes = r.querySelector('.notes-cell input')?.value || '';
+      const unit = card.querySelector('.unit-select')?.value || App.settings.defaultUnit;
+      const difficulty = parseInt(card.querySelector('.difficulty-slider')?.value || 0, 10) || 0;
+      const notes = card.querySelector('.notes-field input')?.value || '';
       return {
         type: 'exercise',
         name,
         reps,
         weights,
         unit,
-        dropset: !!r.querySelector('.dropset-checkbox')?.checked,
+        dropset: !!card.querySelector('.dropset-checkbox')?.checked,
         difficulty,
         notes,
         time: secs
@@ -628,9 +641,8 @@ function saveWorkout() {
   updateExerciseSelector();
   renderProgress();
 
-  // reset table but keep header
-  const headerHtml = $('workoutTable').rows[0].outerHTML;
-  $('workoutTable').innerHTML = headerHtml;
+  // reset container
+  $('workoutListContainer').innerHTML = '';
 
   App.workoutSeconds = 0;
   App.workoutStarted = false;
@@ -644,9 +656,10 @@ function saveWorkout() {
 }
 
 function editWorkout(index) {
-  const table = $('workoutTable');
-  // reset to header row
-  table.innerHTML = table.rows[0].outerHTML;
+  const container = $('workoutListContainer');
+  // reset container
+  container.innerHTML = '';
+  
   const w = App.workouts[index];
   (w.exercises || []).forEach(ex => {
     if (ex.type === 'break') addBreak(ex);
@@ -658,17 +671,17 @@ function editWorkout(index) {
   $('workoutTotalTimer').textContent = 'Total Time: ' + fmtTime(w.totalTime || 0);
 
   // restore time displays
-  const rows = Array.from($('workoutTable').rows).slice(1);
-  rows.forEach((r, i) => {
+  const cards = Array.from($('workoutListContainer').children);
+  cards.forEach((card, i) => {
     const original = (w.exercises || [])[i];
     if (!original) return;
-    ensureTimeCell(r);
-    const td = r.querySelector('.time-display');
+    ensureTimeCell(card);
+    const td = card.querySelector('.time-display');
     if (td) td.dataset.seconds = parseInt(original.time || 0, 10) || 0;
-    if (r.classList.contains('break-row')) {
-      r.dataset.plannedDuration = parseInt(original.duration || 0, 10) || 0;
-      r._timeLeft = parseInt(original.duration || 0, 10) || 0;
-      r._elapsed = parseInt(original.time || 0, 10) || 0;
+    if (card.classList.contains('break-card')) {
+      card.dataset.plannedDuration = parseInt(original.duration || 0, 10) || 0;
+      card._timeLeft = parseInt(original.duration || 0, 10) || 0;
+      card._elapsed = parseInt(original.time || 0, 10) || 0;
     }
   });
 }
@@ -685,13 +698,13 @@ function deleteWorkout(index) {
 function cancelEdit() {
   App.editIndex = null;
   $('cancelEditBtn').style.display = 'none';
-  $('workoutTable').innerHTML = $('workoutTable').rows[0].outerHTML;
+  $('workoutListContainer').innerHTML = '';
   $('workoutTotalTimer').style.display = 'none';
   App.workoutStarted = false;
   App.workoutSeconds = 0;
 }
 
-// ---------- History & UI rendering ----------
+// ---------- History & UI rendering (Card-based) ----------
 function renderHistory() {
   const historyDiv = $('history');
   historyDiv.innerHTML = '';
@@ -704,48 +717,56 @@ function renderHistory() {
     const span = create('span', {}, ' Total Time: ' + fmtTime(workout.totalTime || 0));
 
     const editBtn = create('button', { class: 'edit-btn', textContent: 'Edit' });
-    editBtn.addEventListener('click', () => editWorkout(actualIndex));
+    editBtn.addEventListener('click', () => {
+      editWorkout(actualIndex);
+      // Switch to planning tab
+      document.querySelector('.tab-btn[data-target="main-panel"]').click();
+    });
 
     const delBtn = create('button', { class: 'delete-btn', textContent: 'Delete' });
     delBtn.addEventListener('click', () => deleteWorkout(actualIndex));
 
-    // table for entries
-    const table = create('table', { class: 'history-table' });
-    const thead = create('tr', { html: '\
-      <th>Time</th>\
-      <th>Exercise</th>\
-      <th>Reps</th>\
-      <th>Weight</th>\
-      <th>Difficulty</th>\
-      <th>Notes</th>' });
-    table.appendChild(thead);
+    // container for exercise cards
+    const exContainer = create('div', { class: 'history-exercise-list' });
 
     (workout.exercises || []).forEach(ex => {
-      const tr = create('tr');
+      const card = create('div', { class: 'history-card' });
       if (ex.type === 'break') {
-        tr.innerHTML = `<td>${fmtTime(ex.time || 0)}</td><td colspan="5" style="text-align:center; font-style:italic;">Break: ${ex.duration || 0} sec</td>`;
+        card.classList.add('break-card');
+        card.innerHTML = `
+          <div class="hist-time">${fmtTime(ex.time || 0)}</div>
+          <div class="hist-details" style="text-align:center; font-style:italic;">
+            Break: ${ex.duration || 0} sec
+          </div>
+        `;
       } else {
+        card.classList.add('exercise-card');
         const repsDisplay = ex.reps || 0;
         const weightsDisplay = ex.dropset ? (Array.isArray(ex.weights) ? ex.weights.join(' → ') : ex.weights) : (Array.isArray(ex.weights) ? ex.weights[0] : ex.weights);
         const unit = ex.unit || App.settings.defaultUnit;
         const difficultyDisplay = (ex.difficulty != null ? ex.difficulty : '—');
-        tr.innerHTML = '<td>' + fmtTime(ex.time || 0) + '</td>' +
-          '<td>' + escapeHtml(ex.name || '') + '</td>' +
-          '<td>' + escapeHtml(String(repsDisplay)) + '</td>' +
-          '<td>' + escapeHtml(String(weightsDisplay || '0')) + ' ' + escapeHtml(unit) + (ex.dropset ? ' (dropset)' : '') + '</td>' +
-          '<td>' + escapeHtml(String(difficultyDisplay)) + '/10</td>' +
-          '<td>' + escapeHtml(ex.notes || '') + '</td>';
+        
+        card.innerHTML = `
+          <div class="hist-time">${fmtTime(ex.time || 0)}</div>
+          <div class="hist-details">
+            <strong class="hist-name">${escapeHtml(ex.name || '')}</strong>
+            <div class="hist-stats">
+              <span><strong>Reps:</strong> ${escapeHtml(String(repsDisplay))}</span>
+              <span><strong>Load:</strong> ${escapeHtml(String(weightsDisplay || '0'))} ${escapeHtml(unit)}${ex.dropset ? ' (dropset)' : ''}</span>
+              <span><strong>Diff:</strong> ${escapeHtml(String(difficultyDisplay))}/10</span>
+            </div>
+            ${ex.notes ? `<div class="hist-notes"><strong>Notes:</strong> ${escapeHtml(ex.notes)}</div>` : ''}
+          </div>
+        `;
       }
-      table.appendChild(tr);
+      exContainer.appendChild(card);
     });
-
-    const wrap = create('div', { class: 'table-wrapper' }, table);
 
     div.appendChild(strong);
     div.appendChild(span);
     div.appendChild(editBtn);
     div.appendChild(delBtn);
-    div.appendChild(wrap);
+    div.appendChild(exContainer); // Add card container
     historyDiv.appendChild(div);
   });
 }
@@ -770,7 +791,7 @@ function updateExerciseSelector() {
   select.value = Array.from(select.querySelectorAll('option')).some(o => o.value === current) ? current : '__all';
 }
 
-// ---------- Progress charting (kept compatible with original) ----------
+// ---------- Progress charting (Unchanged) ----------
 function chartColors() {
   return App.settings.appearance === 'dark' ? { grid: '#555', tick: '#ccc', legend: '#ddd' } : { grid: '#ddd', tick: '#333', legend: '#111' };
 }
@@ -967,7 +988,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // tabs
   const tabButtons = document.querySelectorAll('.tab-btn');
   const panels = document.querySelectorAll('.main-panel, .progress-panel, .history-panel');
-  document.querySelector('.main-panel').classList.add('active');
+  // document.querySelector('.main-panel').classList.add('active'); // Already set in HTML
   tabButtons.forEach(btn => {
     btn.addEventListener('click', () => {
       tabButtons.forEach(b => b.classList.remove('active'));
@@ -975,6 +996,11 @@ document.addEventListener('DOMContentLoaded', () => {
       panels.forEach(p => p.classList.remove('active'));
       const targetPanel = document.querySelector('.' + btn.dataset.target);
       if (targetPanel) targetPanel.classList.add('active');
+      
+      // Re-render progress chart if its tab is selected
+      if (btn.dataset.target === 'progress-panel' && App.progressChart) {
+          setTimeout(() => App.progressChart.resize(), 50);
+      }
     });
   });
 });

@@ -11,13 +11,13 @@
 	<button id="settingsBtn" class="settings-btn" aria-label="Open settings">⚙️</button>
 	<h1>Workout Tracker</h1>
 	<nav class="top-tabs">
-		<button class="tab-btn active" data-target="main-panel">📋 Planning</button>
-		<button class="tab-btn" data-target="progress-panel">📊 Progress</button>
-		<button class="tab-btn" data-target="history-panel">🕓 History</button>
+		<button class="tab-btn active" data-target="main-panel">📝 Planning</button>
+		<button class="tab-btn" data-target="progress-panel">📈 Progress</button>
+		<button class="tab-btn" data-target="history-panel">📓 History</button>
 	</nav>
 
 	<div class="container">
-		<div class="main-panel">
+		<div class="main-panel active">
 			<h2>Log Workout</h2>
 			<div id="workoutTotalTimer" class="total-timer" style="display:none;">Total Time: 00:00</div>
 			<div class="buttons">
@@ -28,16 +28,7 @@
 				<button id="cancelEditBtn" style="display:none;">Cancel Edit</button>
 			</div>
 			<div class="table-wrapper">
-				<table id="workoutTable">
-					<tr id="headerRow">
-						<th>Exercise</th>
-						<th>Reps</th>
-						<th>Weight</th>
-						<th>Diff</th>
-						<th>Notes</th>
-						<th>Remove</th>
-					</tr>
-				</table>
+				<div id="workoutListContainer"></div>
 			</div>
 		</div>
 
