@@ -575,24 +575,16 @@ function endWorkout() {
   // clear break countdowns
   const cards = Array.from($('workoutListContainer').children);
   cards.forEach(card => {
-    if (card.classList.contains('break-card')) {
-      if (card._countdown) {
-        clearInterval(card._countdown);
-        card._countdown = null;
+    // Only reset the UI for breaks that were *in progress* but not finished
+    if (card.classList.contains('break-card') && card._countdown && !card.classList.contains('break-done')) {
+      clearInterval(card._countdown);
+      card._countdown = null;
+      const cell = card.querySelector('.break-body');
+      const duration = card.dataset.plannedDuration || 60;
+      if (cell) {
+        cell.innerHTML = `Break: <input type="number" min="1" value="${duration}"> sec`;
       }
-      // Restore planning view for break card
-      const body = card.querySelector('.break-body');
-      if (body) {
-        const duration = card.dataset.plannedDuration || 60;
-        body.innerHTML = `Break: <input type="number" min="1" value="${duration}"> sec`;
-      }
-      card.classList.remove('break-warning', 'break-done');
     }
-    // Hide done button and deactivate split layout
-    const doneBtn = card.querySelector('.row-done-btn');
-    if (doneBtn) doneBtn.style.display = 'none';
-    const header = card.querySelector('.card-actions-header');
-    if (header) header.classList.remove('workout-active');
   });
 
   stopWorkoutTimer();

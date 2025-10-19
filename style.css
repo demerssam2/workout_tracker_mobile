@@ -673,7 +673,7 @@ body.dark .workout-card select {
 }
 
 /* Break card specifics */
-.break-card .card-content {
+.break-card:not(.break-done):not(.break-warning) .card-content {
     background: var(--muted);
 }
 .break-card .card-body {
