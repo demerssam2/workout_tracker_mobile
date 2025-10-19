@@ -126,7 +126,6 @@ function addExercise(ex = {}) {
   const name = escapeHtml(ex.name || '');
   const reps = ex.reps ?? 10;
   const difficulty = ex.difficulty ?? 5;
-  const notes = escapeHtml(ex.notes || '');
   const unit = (ex.unit || App.settings.defaultUnit) === 'kg' ? 'kg' : 'lbs';
   const dropset = !!ex.dropset;
 
@@ -164,10 +163,6 @@ function addExercise(ex = {}) {
         </div>
       </div>
       
-      <div class="card-field notes-field">
-        <label>Notes</label>
-        <input type="text" placeholder="Notes" value="${notes}">
-      </div>
     </div>
     <div class="card-footer">
       </div>
@@ -632,7 +627,6 @@ function saveWorkout() {
       }
       const unit = card.querySelector('.unit-select')?.value || App.settings.defaultUnit;
       const difficulty = parseInt(card.querySelector('.difficulty-slider')?.value || 0, 10) || 0;
-      const notes = card.querySelector('.notes-field input')?.value || '';
       return {
         type: 'exercise',
         name,
@@ -641,7 +635,6 @@ function saveWorkout() {
         unit,
         dropset: !!card.querySelector('.dropset-checkbox')?.checked,
         difficulty,
-        notes,
         time: secs
       };
     }
@@ -784,7 +777,7 @@ function renderHistory() {
               <span><strong>Load:</strong> ${escapeHtml(String(weightsDisplay || '0'))} ${escapeHtml(unit)}${ex.dropset ? ' (dropset)' : ''}</span>
               <span><strong>Diff:</strong> ${escapeHtml(String(difficultyDisplay))}/10</span>
             </div>
-            ${ex.notes ? `<div class="hist-notes"><strong>Notes:</strong> ${escapeHtml(ex.notes)}</div>` : ''}
+            
           </div>
         `;
       }
