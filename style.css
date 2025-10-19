@@ -455,6 +455,56 @@ body.dark .tab-btn:hover:not(.active) {
     border: 1px solid var(--border);
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(30,41,59,0.08);
+    display: flex; /* Make card a flex container */
+    flex-direction: column; /* Stack actions and content vertically */
+    overflow: hidden; /* Keep rounded corners */
+}
+
+.card-action-rail {
+    display: none; /* REMOVE old side rail */
+}
+
+.card-actions-header {
+    display: flex;
+    width: 100%;
+    height: 40px; /* Give the header a fixed height */
+}
+
+.card-actions-header button {
+    flex: 1 1 100%; /* Default to full width */
+    height: 100%;
+    margin: 0;
+    border-radius: 0;
+    font-size: 1.2rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    box-shadow: none;
+    border-bottom: 1px solid var(--border);
+}
+
+/* Hide done button by default */
+.card-actions-header .row-done-btn {
+    display: none;
+}
+
+/* When workout is active, split the buttons 50/50 */
+.card-actions-header.workout-active .row-remove-btn {
+    flex-basis: 50%;
+}
+.card-actions-header.workout-active .row-done-btn {
+    display: flex; /* Show the done button */
+    flex-basis: 50%;
+    border-left: 1px solid var(--border);
+}
+
+
+.card-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .workout-card .card-header {
@@ -462,13 +512,27 @@ body.dark .tab-btn:hover:not(.active) {
     justify-content: space-between;
     align-items: center;
     padding: 8px 12px;
-    border-bottom: 1px solid var(--border);
+    /* border-bottom: 1px solid var(--border); <-- This is now on the action buttons */
 }
 
 .workout-card .card-title {
     font-weight: bold;
     flex: 1;
 }
+
+/* REMOVED .card-actions as it's no longer used in the header */
+.workout-card .card-actions .row-remove-btn {
+    display: none; /* Hide the old button location just in case */
+}
+
+.row-remove-btn {
+    background: var(--btn-end);
+    color: #fff;
+}
+.row-remove-btn:hover {
+    background: var(--btn-end-hover);
+}
+
 
 /* Style for the exercise name input */
 .workout-card .exercise-name-input {
@@ -490,20 +554,8 @@ body.dark .workout-card .exercise-name-input:focus {
 }
 
 
-.workout-card .card-actions .row-remove-btn {
-    background: var(--btn-end);
-    color: #fff;
-    padding: 0;
-    width: 28px;
-    height: 28px;
-    font-size: 14px;
-    line-height: 28px;
-    border-radius: 50%;
-    margin: 0;
-}
-.workout-card .card-actions .row-remove-btn:hover {
-    background: var(--btn-end-hover);
-}
+/* REMOVED old .row-remove-btn styles inside .card-actions */
+
 
 /* *** CARD LAYOUT UPDATED TO FLEXBOX *** */
 .workout-card .card-body {
@@ -619,9 +671,7 @@ body.dark .workout-card select {
 .row-done-btn { /* Style the new done button */
     background: var(--btn-start);
     color: #fff;
-    padding: 10px;
-    font-size: 1rem;
-    width: 100%;
+    /* Remove properties that are now in .card-action-rail button */
 }
 .row-done-btn:hover {
     background: var(--btn-start-hover);

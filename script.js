@@ -81,22 +81,22 @@ function ensureTimeCell(card) {
 }
 
 function createDoneButton(card) {
-  let footer = card.querySelector('.card-footer');
-  if (!footer) {
-    footer = create('div', { class: 'card-footer' });
-    card.appendChild(footer);
+  let header = card.querySelector('.card-actions-header');
+  if (!header) {
+    // This should not happen if cards are created correctly
+    header = create('div', { class: 'card-actions-header' });
+    card.prepend(header);
   }
   
   // Remove existing button if any
-  let oldBtn = footer.querySelector('.row-done-btn');
+  let oldBtn = header.querySelector('.row-done-btn');
   if (oldBtn) oldBtn.remove();
   
-  const btn = create('button', { type: 'button', class: 'row-done-btn', textContent: '✓ Mark Done' });
+  const btn = create('button', { type: 'button', class: 'row-done-btn', textContent: '✓' });
   btn.title = 'Mark done';
-  btn.style.display = App.workoutStarted ? 'block' : 'none';
-  btn.style.width = '100%';
+  // btn.style.display = App.workoutStarted ? 'flex' : 'none'; // <-- BUG: REMOVED THIS LINE
   btn.addEventListener('click', () => completeRow(card));
-  footer.prepend(btn); // Prepend to put it before the timer
+  header.appendChild(btn);
   return btn;
 }
 
@@ -117,6 +117,12 @@ function addExercise(ex = {}) {
   const container = $('workoutListContainer');
   const card = create('div', { class: 'workout-card exercise-card' });
 
+  // Create the new structure: actions header and content wrapper
+  const actionsHeader = create('div', { class: 'card-actions-header' });
+  const contentWrapper = create('div', { class: 'card-content' });
+  card.appendChild(actionsHeader);
+  card.appendChild(contentWrapper);
+
   const name = escapeHtml(ex.name || '');
   const reps = ex.reps ?? 10;
   const difficulty = ex.difficulty ?? 5;
@@ -124,14 +130,12 @@ function addExercise(ex = {}) {
   const unit = (ex.unit || App.settings.defaultUnit) === 'kg' ? 'kg' : 'lbs';
   const dropset = !!ex.dropset;
 
-  // Card structure
+  // Card structure (now goes into contentWrapper)
   let html = `
     <div class="card-header">
       <div class="card-title">
         <input type="text" class="exercise-name-input" placeholder="Exercise" value="${name}">
       </div>
-      <div class="card-actions">
-        </div>
     </div>
     <div class="card-body">
       <div class="card-field reps-field">
@@ -169,15 +173,16 @@ function addExercise(ex = {}) {
       </div>
   `;
 
-  card.innerHTML = html;
+  contentWrapper.innerHTML = html;
 
-  // Add remove button
+  // Add remove button to the actions header
   const removeBtn = create('button', { type: 'button', class: 'row-remove-btn', textContent: 'X', title: 'Remove row' });
   removeBtn.addEventListener('click', () => card.remove());
-  card.querySelector('.card-actions').appendChild(removeBtn);
+  actionsHeader.appendChild(removeBtn);
 
   if (App.workoutStarted) {
     createDoneButton(card);
+    actionsHeader.classList.add('workout-active');
   }
   wireRowControls(card);
 
@@ -200,6 +205,12 @@ function addBreak(br = {}) {
   const container = $('workoutListContainer');
   const card = create('div', { class: 'workout-card break-card' });
 
+  // Create the new structure: actions header and content wrapper
+  const actionsHeader = create('div', { class: 'card-actions-header' });
+  const contentWrapper = create('div', { class: 'card-content' });
+  card.appendChild(actionsHeader);
+  card.appendChild(contentWrapper);
+
   const duration = parseInt(br.duration || br.plannedDuration || 60, 10) || 60;
   
   // dataset planned duration
@@ -210,14 +221,12 @@ function addBreak(br = {}) {
   card._elapsed = br.time != null ? parseInt(br.time, 10) || 0 : 0;
   card._countdown = null;
 
-  // Card structure
+  // Card structure (now goes into contentWrapper)
   let html = `
     <div class="card-header">
       <div class="card-title">
         Break
       </div>
-      <div class="card-actions">
-        </div>
     </div>
     <div class="card-body break-body">
       Duration: <input type="number" min="1" value="${duration}"> sec
@@ -226,13 +235,16 @@ function addBreak(br = {}) {
       </div>
   `;
   
-  card.innerHTML = html;
+  contentWrapper.innerHTML = html;
   
   const remBtn = create('button', { type: 'button', class: 'row-remove-btn', textContent: 'X', title: 'Remove break' });
   remBtn.addEventListener('click', () => card.remove());
-  card.querySelector('.card-actions').appendChild(remBtn);
+  actionsHeader.appendChild(remBtn);
 
-  if (App.workoutStarted) createDoneButton(card);
+  if (App.workoutStarted) {
+    createDoneButton(card);
+    actionsHeader.classList.add('workout-active');
+  }
   
   // restore visible time cell if pre-filled
   if (br.time != null) {
@@ -537,20 +549,10 @@ function startWorkout() {
   // No header to worry about
 
   cards.forEach(card => {
-    // Only show button if not already done
-    if (!card.classList.contains('exercise-done') && !card.classList.contains('break-done')) {
-        const doneBtn = createDoneButton(card);
-        doneBtn.style.display = 'block';
-    }
-
-    if (card.classList.contains('break-card')) {
-      const inp = card.querySelector('.break-body input[type="number"]');
-      if (inp) card.dataset.plannedDuration = parseInt(inp.value || 0, 10) || 0;
-      card._timeLeft = parseInt(card.dataset.plannedDuration || 0, 10) || 0;
-      card._elapsed = 0;
-    }
-
-    ensureTimeCell(card);
+    // Show done button and activate split layout
+    createDoneButton(card);
+    const header = card.querySelector('.card-actions-header');
+    if (header) header.classList.add('workout-active');
   });
 
   btn.textContent = 'End';
@@ -575,14 +577,22 @@ function startWorkout() {
 
 function endWorkout() {
   // stop all row timers
-  App.rowTimers.forEach((id, i) => { if (id) clearInterval(id); App.rowTimers[i] = null; });
+  App.rowTimers.forEach((id, i) => {
+    if (id) stopRowTimer(i);
+  });
   App.activeRowIndex = null;
 
   // clear break countdowns
   const cards = Array.from($('workoutListContainer').children);
   cards.forEach(card => {
-    if (card._countdown) { clearInterval(card._countdown); card._countdown = null; }
-    card.classList.remove('break-warning');
+    if (card.classList.contains('break-card') && card._countdown) {
+      clearInterval(card._countdown);
+    }
+    // Hide done button and deactivate split layout
+    const doneBtn = card.querySelector('.row-done-btn');
+    if (doneBtn) doneBtn.style.display = 'none';
+    const header = card.querySelector('.card-actions-header');
+    if (header) header.classList.remove('workout-active');
   });
 
   stopWorkoutTimer();
