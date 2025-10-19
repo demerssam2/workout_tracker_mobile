@@ -673,6 +673,12 @@ body.dark .workout-card select {
 }
 
 /* Break card specifics */
+.break-card .card-content {
+    background: var(--muted);
+}
+.break-card .card-body {
+    padding: 12px;
+}
 .break-card .card-title {
     color: var(--fg);
     opacity: 0.8;
@@ -684,6 +690,7 @@ body.dark .workout-card select {
     gap: 8px; /* <-- ADDED */
     font-size: 1.1rem;
     align-items: center;
+    justify-content: center;
 }
 .break-card .break-body input {
     display: inline-block;

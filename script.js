@@ -218,13 +218,8 @@ function addBreak(br = {}) {
 
   // Card structure (now goes into contentWrapper)
   let html = `
-    <div class="card-header">
-      <div class="card-title">
-        Break
-      </div>
-    </div>
     <div class="card-body break-body">
-      Duration: <input type="number" min="1" value="${duration}"> sec
+      Break: <input type="number" min="1" value="${duration}"> sec
     </div>
     <div class="card-footer">
       </div>
@@ -580,8 +575,18 @@ function endWorkout() {
   // clear break countdowns
   const cards = Array.from($('workoutListContainer').children);
   cards.forEach(card => {
-    if (card.classList.contains('break-card') && card._countdown) {
-      clearInterval(card._countdown);
+    if (card.classList.contains('break-card')) {
+      if (card._countdown) {
+        clearInterval(card._countdown);
+        card._countdown = null;
+      }
+      // Restore planning view for break card
+      const body = card.querySelector('.break-body');
+      if (body) {
+        const duration = card.dataset.plannedDuration || 60;
+        body.innerHTML = `Break: <input type="number" min="1" value="${duration}"> sec`;
+      }
+      card.classList.remove('break-warning', 'break-done');
     }
     // Hide done button and deactivate split layout
     const doneBtn = card.querySelector('.row-done-btn');
@@ -603,7 +608,9 @@ function endWorkout() {
 // ---------- Save / Edit / Delete / Cancel ----------
 function saveWorkout() {
   // end workout to freeze timers
-  endWorkout();
+  if (App.workoutStarted) {
+    endWorkout();
+  }
 
   const container = $('workoutListContainer');
   const cards = Array.from(container.children);
@@ -682,6 +689,16 @@ function editWorkout(index) {
   // reset container
   container.innerHTML = '';
   
+  // If a workout is active, end it before loading another for editing.
+  if (App.workoutStarted) {
+    endWorkout();
+    const btn = $('startWorkoutBtn');
+    btn.textContent = 'Start';
+    btn.dataset.active = 'false';
+    btn.classList.remove('end');
+    document.body.classList.remove('show-workout');
+  }
+
   const w = App.workouts[index];
   (w.exercises || []).forEach(ex => {
     if (ex.type === 'break') addBreak(ex);
