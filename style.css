@@ -505,10 +505,11 @@ body.dark .workout-card .exercise-name-input:focus {
     background: var(--btn-end-hover);
 }
 
+/* *** CARD LAYOUT UPDATED TO FLEXBOX *** */
 .workout-card .card-body {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* 2-column layout */
-    gap: 10px;
+    display: flex; /* <-- CHANGED */
+    flex-wrap: wrap; /* <-- ADDED */
+    gap: 12px; /* <-- CHANGED */
     padding: 12px;
 }
 
@@ -516,6 +517,8 @@ body.dark .workout-card .exercise-name-input:focus {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    flex: 1; /* <-- ADDED: Fields will grow */
+    min-width: 120px; /* <-- ADDED: Fields will wrap if space is tight */
 }
 
 .workout-card .card-field label {
@@ -526,9 +529,20 @@ body.dark .workout-card .exercise-name-input:focus {
 }
 
 /* Make weight and notes full-width */
-.workout-card .weight-field,
+.workout-card .weight-field {
+    /* grid-column: 1 / -1; <-- REMOVED */
+    flex: 2; /* <-- ADDED: Give weight more space */
+    min-width: 180px; /* <-- ADDED */
+}
+
+.workout-card .diff-field {
+    flex: 2; /* <-- ADDED: Give slider more space */
+    min-width: 150px; /* <-- ADDED */
+}
+
 .workout-card .notes-field {
-    grid-column: 1 / -1;
+    /* grid-column: 1 / -1; <-- REMOVED */
+    flex-basis: 100%; /* <-- ADDED: Make notes field full width */
 }
 
 /* Inputs */
@@ -619,7 +633,10 @@ body.dark .workout-card select {
     opacity: 0.8;
 }
 .break-card .break-body {
-    grid-template-columns: 1fr; /* Single column */
+    /* grid-template-columns: 1fr; <-- REMOVED */
+    display: flex; /* <-- ADDED */
+    flex-wrap: wrap; /* <-- ADDED */
+    gap: 8px; /* <-- ADDED */
     font-size: 1.1rem;
     align-items: center;
 }
@@ -636,12 +653,15 @@ body.dark .workout-card select {
     text-align: center;
     display: block;
     margin-bottom: 10px;
+    flex-basis: 100%; /* <-- ADDED */
 }
 .break-body button.small {
     padding: 6px 8px;
     font-size: 0.9rem;
-    margin: 2px;
+    margin: 0; /* <-- CHANGED */
     width: auto;
+    flex-shrink: 0; /* <-- ADDED */
+    flex-grow: 1; /* <-- ADDED */
 }
 
 /* --- NEW HISTORY CARD STYLES --- */

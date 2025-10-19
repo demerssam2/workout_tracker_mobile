@@ -138,13 +138,7 @@ function addExercise(ex = {}) {
         <label>Reps</label>
         <input type="number" min="1" value="${reps}">
       </div>
-      <div class="card-field diff-field">
-        <label>Difficulty</label>
-        <div class="difficulty-control">
-          <input type="range" min="1" max="10" value="${difficulty}" class="difficulty-slider">
-          <span class="difficulty-value">${difficulty}</span>
-        </div>
-      </div>
+      
       <div class="card-field weight-field">
         <label>Weight</label>
         <div class="weight-line">
@@ -157,6 +151,15 @@ function addExercise(ex = {}) {
         <label class="dropset-label"><input type="checkbox" class="dropset-checkbox"${dropset ? ' checked' : ''}> dropset</label>
         <div class="dropset-inputs" style="display:${dropset ? '' : 'none'}"></div>
       </div>
+
+      <div class="card-field diff-field">
+        <label>Difficulty</label>
+        <div class="difficulty-control">
+          <input type="range" min="1" max="10" value="${difficulty}" class="difficulty-slider">
+          <span class="difficulty-value">${difficulty}</span>
+        </div>
+      </div>
+      
       <div class="card-field notes-field">
         <label>Notes</label>
         <input type="text" placeholder="Notes" value="${notes}">
