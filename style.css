@@ -386,7 +386,6 @@ table {
 .progress-panel canvas {
     display: block;
     width: 100% !important;
-    height: auto !important;
     aspect-ratio: 2 / 1;
     margin: 0 auto;
     z-index: 1;
@@ -394,7 +393,7 @@ table {
 
 /* Slightly shorter charts on small screens */
 @media (max-width: 480px) {
-    .progress-panel canvas { aspect-ratio: 1.5 / 1; }
+    .progress-panel canvas { aspect-ratio: 1.8 / 1; }
 }
 
 /* --- Top Tabs Navigation --- */

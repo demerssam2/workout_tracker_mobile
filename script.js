@@ -911,7 +911,7 @@ function createOrUpdateChart(chartId, type, labels, data, datasetLabel) {
       }]
     },
     options: {
-      responsive: true, maintainAspectRatio: false,
+      responsive: true, maintainAspectRatio: true,
       scales: { x: { display: false, grid: { drawTicks: false, drawBorder: false } }, y: { grid: { color: colors.grid }, ticks: { color: colors.tick } } },
       plugins: { legend: { labels: { color: colors.legend } }, tooltip: { callbacks: { title: (ctx) => labels[ctx[0].dataIndex] } } }
     }
