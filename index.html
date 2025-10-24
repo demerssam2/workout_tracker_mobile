@@ -8,12 +8,11 @@
 	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-	<button id="settingsBtn" class="settings-btn" aria-label="Open settings">⚙️</button>
-	<h1>Workout Tracker</h1>
 	<nav class="top-tabs">
-		<button class="tab-btn active" data-target="main-panel">📝 Planning</button>
+		<button class="tab-btn active" data-target="main-panel">📋 Planning</button>
 		<button class="tab-btn" data-target="progress-panel">📈 Progress</button>
-		<button class="tab-btn" data-target="history-panel">📓 History</button>
+		<button class="tab-btn" data-target="history-panel">📜 History</button>
+		<button class="tab-btn" data-target="settings-panel">⚙️ Settings</button>
 	</nav>
 
 	<div class="container">
@@ -54,28 +53,23 @@
 			<h2>History</h2>
 			<div id="history"></div>
 		</div>
-	</div>
-
-	<div id="settingsModal" class="modal-backdrop">
-		<div class="modal">
-			<h3>Settings</h3>
-			<div class="row">
-				<label for="defaultUnit">Default Unit</label>
-				<select id="defaultUnit">
-					<option value="kg">kg</option>
-					<option value="lbs">lbs</option>
-				</select>
-			</div>
-			<div class="row">
-				<label for="appearance">Appearance</label>
-				<select id="appearance">
-					<option value="light">Light</option>
-					<option value="dark">Dark</option>
-				</select>
-			</div>
-			<div class="row" style="justify-content:flex-end; gap:8px;">
-				<button id="saveSettingsBtn">Save</button>
-				<button id="closeSettingsBtn">Cancel</button>
+		<div class="settings-panel">
+			<h2>Settings</h2>
+			<div class="settings-content">
+				<div class="setting-row">
+					<label for="defaultUnit">Default Unit</label>
+					<select id="defaultUnit">
+						<option value="kg">kg</option>
+						<option value="lbs">lbs</option>
+					</select>
+				</div>
+				<div class="setting-row">
+					<label for="appearance">Appearance</label>
+					<select id="appearance">
+						<option value="light">Light</option>
+						<option value="dark">Dark</option>
+					</select>
+				</div>
 			</div>
 		</div>
 	</div>

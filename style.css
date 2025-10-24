@@ -62,12 +62,6 @@ html, body {
 	overflow-x: hidden;
 }
 
-h1 {
-	font-size: 20px;
-	text-align: center;
-	margin: 12px 0;
-}
-
 h2 {
 	font-size: 16px;
 	margin: 10px 0 6px 0;
@@ -100,6 +94,49 @@ h2 {
 
 .history-panel, .progress-panel {
 	padding: 8px;
+}
+
+/* Settings Panel */
+.settings-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 8px;
+    display: none;
+}
+
+.settings-panel.active {
+    display: block;
+}
+
+.settings-content {
+    padding: 20px;
+}
+
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px 0;
+    gap: 16px;
+}
+
+.setting-row label {
+    font-weight: 500;
+    font-size: 1rem;
+}
+
+.setting-row select {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--fg);
+    font-size: 1rem;
+    min-width: 120px;
 }
 
 .total-timer {
@@ -254,57 +291,6 @@ table {
 	0%   { background-color: inherit; }
 	50%  { background-color: rgba(255, 0, 0, 0.16); }
 	100% { background-color: inherit; }
-}
-
-.settings-btn {
-	position: fixed;
-	top: 10px;
-	right: 10px;
-	z-index: 100;
-	background: var(--btn-bg);
-	color: var(--btn-fg);
-	border: 1px solid var(--border);
-	border-radius: 50%;
-	width: 44px;
-	height: 44px;
-	font-size: 20px;
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-}
-
-.settings-btn:hover {
-	background: var(--btn-hover);
-}
-
-.modal-backdrop {
-	display: none;
-	position: fixed;
-	inset: 0;
-	background: var(--backdrop);
-	justify-content: center;
-	align-items: center;
-	padding: 20px;
-	z-index: 1000; /* Add this */
-}
-
-.modal {
-	background: var(--panel);
-	color: var(--fg);
-	padding: 18px;
-	border-radius: 10px;
-	width: 100%;
-	max-width: 420px;
-	border: 1px solid var(--border);
-	z-index: 1001; /* Add this */
-}
-
-.modal .row {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin: 10px 0;
 }
 
 /* History buttons */

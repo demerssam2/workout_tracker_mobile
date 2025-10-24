@@ -991,19 +991,20 @@ function attachPanelResizeObserver() {
 document.addEventListener('DOMContentLoaded', () => {
   applyAppearance();
 
-  // settings modal wiring
-  $('settingsBtn').addEventListener('click', () => {
-    $('settingsModal').style.display = 'flex';
-    $('defaultUnit').value = App.settings.defaultUnit || 'kg';
-    $('appearance').value = App.settings.appearance || 'light';
-  });
-  $('closeSettingsBtn').addEventListener('click', () => $('settingsModal').style.display = 'none');
-  $('saveSettingsBtn').addEventListener('click', () => {
+// settings panel - load current values and auto-save on change
+  $('defaultUnit').value = App.settings.defaultUnit || 'kg';
+  $('appearance').value = App.settings.appearance || 'light';
+  
+  $('defaultUnit').addEventListener('change', () => {
     App.settings.defaultUnit = $('defaultUnit').value;
+    saveSettings();
+    renderProgress();
+  });
+  
+  $('appearance').addEventListener('change', () => {
     App.settings.appearance = $('appearance').value;
     saveSettings();
     applyAppearance();
-    $('settingsModal').style.display = 'none';
     renderProgress();
   });
 
@@ -1024,8 +1025,8 @@ document.addEventListener('DOMContentLoaded', () => {
   attachPanelResizeObserver();
 
   // tabs
-  const tabButtons = document.querySelectorAll('.tab-btn');
-  const panels = document.querySelectorAll('.main-panel, .progress-panel, .history-panel');
+const tabButtons = document.querySelectorAll('.tab-btn');
+  const panels = document.querySelectorAll('.main-panel, .progress-panel, .history-panel, .settings-panel');
   // document.querySelector('.main-panel').classList.add('active'); // Already set in HTML
   tabButtons.forEach(btn => {
     btn.addEventListener('click', () => {
