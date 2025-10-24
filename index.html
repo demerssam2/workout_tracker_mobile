@@ -30,19 +30,26 @@
 				<button id="cancelEditBtn" style="display:none;">Cancel Edit</button>
 			</div>
 		</div>
-
 		<div class="progress-panel">
 			<h2>Progress</h2>
 			<select id="exerciseSelect"><option value="__all">All exercises</option></select>
-			<select id="chartSelect">
-				<option value="difficulty">Difficulty</option>
-				<option value="weight">Total Load (Volume)</option>
-				<option value="duration">Workout Duration</option>
-				<option value="break">Break Time</option>
-			</select>
-			<canvas id="progressChart" aria-label="Progress chart" role="img"></canvas>
+			<div class="chart-container">
+				<h3>Difficulty</h3>
+				<canvas id="difficultyChart" aria-label="Difficulty chart" role="img"></canvas>
+			</div>
+			<div class="chart-container">
+				<h3>Total Load (Volume)</h3>
+				<canvas id="weightChart" aria-label="Weight chart" role="img"></canvas>
+			</div>
+			<div class="chart-container">
+				<h3>Workout Duration</h3>
+				<canvas id="durationChart" aria-label="Duration chart" role="img"></canvas>
+			</div>
+			<div class="chart-container">
+				<h3>Break Time</h3>
+				<canvas id="breakChart" aria-label="Break time chart" role="img"></canvas>
+			</div>
 		</div>
-		
 		<div class="history-panel">
 			<h2>History</h2>
 			<div id="history"></div>

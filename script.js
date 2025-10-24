@@ -1,4 +1,4 @@
-// script.js — rewritten, modernized, bug-fixed
+// script.js – rewritten, modernized, bug-fixed
 'use strict';
 
 /*
@@ -24,7 +24,12 @@ const App = {
   workoutTimerId: null,
   activeRowIndex: null,
   rowTimers: [],                // array of interval IDs (per row) or null
-  progressChart: null,
+  charts: {
+    difficulty: null,
+    weight: null,
+    duration: null,
+    break: null
+  },
   panelResizeObserver: null
 };
 
@@ -822,7 +827,7 @@ function updateExerciseSelector() {
   select.value = Array.from(select.querySelectorAll('option')).some(o => o.value === current) ? current : '__all';
 }
 
-// ---------- Progress charting (Unchanged) ----------
+// ---------- Progress charting (Updated for multiple charts) ----------
 function chartColors() {
   return App.settings.appearance === 'dark' ? { grid: '#555', tick: '#ccc', legend: '#ddd' } : { grid: '#ddd', tick: '#333', legend: '#111' };
 }
@@ -887,8 +892,8 @@ function buildProgressData(selected) {
   return { labels, difficultyData, weightData, durationData, breakData };
 }
 
-function createOrUpdateProgressChart(type, labels, data, datasetLabel) {
-  const canvas = $('progressChart');
+function createOrUpdateChart(chartId, type, labels, data, datasetLabel) {
+  const canvas = $(chartId);
   if (!canvas) return;
   const colors = chartColors();
   const cfg = {
@@ -916,67 +921,70 @@ function createOrUpdateProgressChart(type, labels, data, datasetLabel) {
   else if (type === 'break') { cfg.data.datasets[0].borderColor = 'rgb(255,44,44)'; cfg.data.datasets[0].backgroundColor = 'rgba(255,44,44,0.1)'; }
   else { cfg.options.scales.y.suggestedMin = 0; cfg.options.scales.y.suggestedMax = 10; }
 
-  if (App.progressChart) {
-    App.progressChart.config.type = cfg.type;
-    App.progressChart.config.data = cfg.data;
-    App.progressChart.options = cfg.options;
-    App.progressChart.update();
+  if (App.charts[type]) {
+    App.charts[type].config.type = cfg.type;
+    App.charts[type].config.data = cfg.data;
+    App.charts[type].options = cfg.options;
+    App.charts[type].update();
   } else {
-    App.progressChart = new Chart(canvas.getContext('2d'), cfg);
+    App.charts[type] = new Chart(canvas.getContext('2d'), cfg);
   }
-
-  setTimeout(() => {
-    try {
-      const panel = canvas.closest('.progress-panel');
-      if (panel) panel.style.minHeight = canvas.clientHeight + 'px';
-    } catch (e) { /* ignore */ }
-  }, 60);
 }
 
 function renderProgress() {
   updateExerciseSelector();
   const selected = $('exerciseSelect')?.value || '__all';
-  const chartType = $('chartSelect')?.value || 'difficulty';
   const d = buildProgressData(selected);
-  let labels = d.labels, data = [], datasetLabel = '';
 
-  if (chartType === 'difficulty') {
-    data = d.difficultyData;
-    datasetLabel = selected === '__all' ? 'Avg Difficulty (all exercises)' : `Avg Difficulty — ${selected}`;
-  } else if (chartType === 'weight') {
-    data = d.weightData;
-    datasetLabel = selected === '__all' ? `Total Load (Volume) (${App.settings.defaultUnit})` : `Total Load — ${selected} (${App.settings.defaultUnit})`;
-  } else if (chartType === 'duration') {
-    data = d.durationData;
-    datasetLabel = selected === '__all' ? 'Workout Duration (sec)' : `Duration — ${selected} (sec)`;
-  } else if (chartType === 'break') {
-    data = d.breakData;
-    datasetLabel = selected === '__all' ? 'Total Break Time (sec)' : `Avg Break After — ${selected} (sec)`;
-  }
+  // Difficulty chart
+  createOrUpdateChart(
+    'difficultyChart',
+    'difficulty',
+    d.labels,
+    d.difficultyData,
+    selected === '__all' ? 'Avg Difficulty (all exercises)' : `Avg Difficulty — ${selected}`
+  );
 
-  createOrUpdateProgressChart(chartType, labels, data, datasetLabel);
+  // Weight chart
+  createOrUpdateChart(
+    'weightChart',
+    'weight',
+    d.labels,
+    d.weightData,
+    selected === '__all' ? `Total Load (Volume) (${App.settings.defaultUnit})` : `Total Load — ${selected} (${App.settings.defaultUnit})`
+  );
 
-  // nudge layout to reserve space
-  setTimeout(() => {
-    const canvas = $('progressChart');
-    const panel = canvas?.closest('.progress-panel');
-    if (canvas && panel) {
-      const h = canvas.clientHeight;
-      if (h && h > 0) panel.style.minHeight = h + 'px';
-    }
-  }, 80);
+  // Duration chart
+  createOrUpdateChart(
+    'durationChart',
+    'duration',
+    d.labels,
+    d.durationData,
+    selected === '__all' ? 'Workout Duration (sec)' : `Duration — ${selected} (sec)`
+  );
+
+  // Break chart
+  createOrUpdateChart(
+    'breakChart',
+    'break',
+    d.labels,
+    d.breakData,
+    selected === '__all' ? 'Total Break Time (sec)' : `Avg Break After — ${selected} (sec)`
+  );
 }
 
 function attachPanelResizeObserver() {
-  const canvas = $('progressChart');
-  if (!canvas) return;
+  const canvases = ['difficultyChart', 'weightChart', 'durationChart', 'breakChart'].map(id => $(id)).filter(c => c);
+  if (!canvases.length) return;
   if (App.panelResizeObserver) App.panelResizeObserver.disconnect();
   App.panelResizeObserver = new ResizeObserver(() => {
-    if (App.progressChart) {
-      try { App.progressChart.resize(); } catch (e) { /* ignore */ }
-    }
+    Object.values(App.charts).forEach(chart => {
+      if (chart) {
+        try { chart.resize(); } catch (e) { /* ignore */ }
+      }
+    });
   });
-  App.panelResizeObserver.observe(canvas);
+  canvases.forEach(canvas => App.panelResizeObserver.observe(canvas));
 }
 
 // ---------- Init & wiring ----------
@@ -1008,7 +1016,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // progress filters
   $('exerciseSelect').addEventListener('change', renderProgress);
-  $('chartSelect').addEventListener('change', renderProgress);
 
   // initial render
   renderHistory();
@@ -1028,9 +1035,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const targetPanel = document.querySelector('.' + btn.dataset.target);
       if (targetPanel) targetPanel.classList.add('active');
       
-      // Re-render progress chart if its tab is selected
-      if (btn.dataset.target === 'progress-panel' && App.progressChart) {
-          setTimeout(() => App.progressChart.resize(), 50);
+      // Re-render progress charts if its tab is selected
+      if (btn.dataset.target === 'progress-panel') {
+          setTimeout(() => {
+            Object.values(App.charts).forEach(chart => {
+              if (chart) chart.resize();
+            });
+          }, 50);
       }
     });
   });

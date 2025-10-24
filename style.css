@@ -364,25 +364,35 @@ table {
     margin-right: 0;
 }
 
-/* Progress charts: single canvas layout */
 .progress-panel {
     position: relative;
     max-width: 640px;
     margin: 0 auto;
-    /* reserve reasonable min-height so History doesn't overlap while chart loads */
-    min-height: 220px;
+    padding-bottom: 20px;
+}
+
+.progress-panel .chart-container {
+    margin-bottom: 32px;
+}
+
+.progress-panel .chart-container h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 16px 0 8px 0;
+    text-align: center;
+    color: var(--fg);
 }
 
 .progress-panel canvas {
     display: block;
     width: 100% !important;
-    height: auto !important; /* let Chart.js set internal pixel buffer */
-    aspect-ratio: 2 / 1;      /* default visual aspect — Chart.js will adjust */
+    height: auto !important;
+    aspect-ratio: 2 / 1;
     margin: 0 auto;
     z-index: 1;
 }
 
-/* Slightly shorter chart on small screens */
+/* Slightly shorter charts on small screens */
 @media (max-width: 480px) {
     .progress-panel canvas { aspect-ratio: 1.5 / 1; }
 }
