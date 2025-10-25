@@ -139,20 +139,25 @@ function addExercise(ex = {}) {
 			</div>
 		</div>
 		<div class="card-body">
-			<div class="card-field reps-field">
-				<label>Reps</label>
-				<input type="number" min="1" value="${reps}">
-			</div>
-			
-			<div class="card-field weight-field">
-				<label>Weight</label>
-				<div class="weight-line">
-					<input type="number" min="0" class="single-weight" value="${dropset ? '' : (Array.isArray(ex.weights) ? (ex.weights[0] ?? 0) : (ex.weight ?? 0))}">
-					<select class="unit-select">
-						<option value="kg"${unit === 'kg' ? ' selected' : ''}>kg</option>
-						<option value="lbs"${unit === 'lbs' ? ' selected' : ''}>lbs</option>
-					</select>
+			<div class="card-row">
+				<div class="card-field reps-field">
+					<label>Reps</label>
+					<input type="number" min="1" value="${reps}">
 				</div>
+				
+				<div class="card-field weight-field">
+					<label>Weight</label>
+					<div class="weight-line">
+						<input type="number" min="0" class="single-weight" value="${dropset ? '' : (Array.isArray(ex.weights) ? (ex.weights[0] ?? 0) : (ex.weight ?? 0))}">
+						<select class="unit-select">
+							<option value="kg"${unit === 'kg' ? ' selected' : ''}>kg</option>
+							<option value="lbs"${unit === 'lbs' ? ' selected' : ''}>lbs</option>
+						</select>
+					</div>
+				</div>
+			</div>
+
+			<div class="card-field dropset-field">
 				<label class="dropset-label"><input type="checkbox" class="dropset-checkbox"${dropset ? ' checked' : ''}> dropset</label>
 				<div class="dropset-inputs" style="display:${dropset ? '' : 'none'}"></div>
 			</div>

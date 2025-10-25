@@ -493,16 +493,16 @@ body.dark .tab-btn:hover:not(.active) {
 
 /* When workout is active, split the rail */
 .card-action-rail.workout-active .row-remove-btn {
-	flex: 1; /* <-- UPDATED: Allow to grow */
+	flex: 1; 
 	border-bottom: 1px solid var(--border);
 }
 
 .card-action-rail.workout-active .row-done-btn {
-	flex: 1; /* <-- UPDATED: Allow to grow */
+	flex: 1; 
 }
 
 .card-action-rail .time-cell {
-	flex: 0; /* <-- UPDATED: Don't grow, take content height */
+	flex: 0; 
 	display: none; /* Hidden by default */
 	align-items: center;
 	justify-content: center;
@@ -578,6 +578,14 @@ body.dark .workout-card .exercise-name-input:focus {
 	padding: 12px;
 }
 
+/* NEW: Wrapper for Reps and Weight */
+.card-row {
+	display: flex;
+	flex: 1 1 100%; /* Make the row take the full width */
+	gap: 12px;
+	align-items: flex-end; /* Aligns inputs */
+}
+
 .workout-card .card-field {
 	display: flex;
 	flex-direction: column;
@@ -586,16 +594,30 @@ body.dark .workout-card .exercise-name-input:focus {
 	min-width: 120px;
 }
 
-.workout-card .card-field label {
-	font-size: 0.8rem;
-	font-weight: 500;
-	color: var(--fg);
-	opacity: 0.7;
+/* NEW: Override fields inside the new row */
+.card-row .card-field {
+	min-width: 0;
+}
+
+/* NEW: Specifics for reps and weight inside the row */
+.card-row .reps-field {
+	flex: 1 1 80px; /* Smaller basis */
+}
+
+.card-row .weight-field {
+	flex: 2 1 120px; /* Larger basis */
 }
 
 .workout-card .weight-field {
+	/* This is now overridden by .card-row .weight-field, which is fine */
 	flex: 2;
 	min-width: 180px;
+}
+
+/* NEW: Style the new dropset field */
+.workout-card .dropset-field {
+	flex: 1 1 100%; /* Make it take its own line */
+	min-width: 0;
 }
 
 .workout-card .diff-field {
