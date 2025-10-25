@@ -1,14 +1,4 @@
-// script.js – rewritten, modernized, bug-fixed
 'use strict';
-
-/*
-  Modern, single-file vanilla-js rewrite of the workout tracker behavior.
-
-  - Keeps same storage keys and UI shape so it's compatible with index.html + style.css
-  - Fixes break "skip" bug by tracking actual elapsed seconds on each break row
-  - Cleaner separation of concerns, fewer globals, more helper functions
-  - Uses const/let, arrow functions, and clearer variable naming
-*/
 
 const STORAGE_SETTINGS_KEY = 'wt_settings_v1';
 const STORAGE_WORKOUTS_KEY = 'wt_workouts_v1';
@@ -29,7 +19,12 @@ const App = {
 		duration: null,
 		break: null
 	},
-	panelResizeObserver: null
+	panelResizeObserver: null,
+	// Callbacks for modal
+	modal: {
+		onConfirm: null,
+		onCancel: null
+	}
 };
 
 // ---------- Utilities ----------
@@ -62,6 +57,33 @@ const create = (tag, props = {}, ...children) => {
 	return el;
 };
 
+// ---------- Custom Modal (replaces alert/confirm) ----------
+/**
+ * Shows a custom modal.
+ * @param {string} text - The message to display.
+ * @param {function} [onConfirm] - Callback if the 'OK' button is pressed.
+ * @param {function} [onCancel] - Callback if the 'Cancel' button is pressed. If provided, 'Cancel' button is shown.
+ */
+function showModal(text, onConfirm, onCancel) {
+	$('modalText').textContent = text;
+	App.modal.onConfirm = onConfirm || null;
+	App.modal.onCancel = onCancel || null;
+	
+	if (onCancel) {
+		$('modalCancelBtn').style.display = 'inline-block';
+	} else {
+		$('modalCancelBtn').style.display = 'none';
+	}
+	
+	$('modalOverlay').style.display = 'flex';
+}
+
+function hideModal() {
+	$('modalOverlay').style.display = 'none';
+	App.modal.onConfirm = null;
+	App.modal.onCancel = null;
+}
+
 // ---------- Appearance ----------
 function applyAppearance() {
 	document.body.classList.toggle('dark', App.settings.appearance === 'dark');
@@ -79,7 +101,7 @@ function ensureTimeCell(card) {
 		timeCell = create('div', { class: 'time-cell' });
 		const display = create('span', { class: 'time-display', 'data-seconds': 0 }, fmtTime(0));
 		timeCell.appendChild(display);
-		rail.appendChild(timeCell); // <-- Appends to the end of the rail
+		rail.appendChild(timeCell);
 	}
 	return rail.querySelector('.time-display');
 }
@@ -98,7 +120,7 @@ function createDoneButton(card) {
 	const btn = create('button', { type: 'button', class: 'row-done-btn', textContent: '✓' });
 	btn.title = 'Mark done';
 	btn.addEventListener('click', () => completeRow(card));
-	rail.appendChild(btn); // <-- Appends to the end of the rail
+	rail.appendChild(btn);
 	return btn;
 }
 
@@ -178,10 +200,10 @@ function addExercise(ex = {}) {
 	// Add remove button to the rail
 	const removeBtn = create('button', { type: 'button', class: 'row-remove-btn', textContent: 'X', title: 'Remove row' });
 	removeBtn.addEventListener('click', () => card.remove());
-	rail.appendChild(removeBtn); // <-- Appends removeBtn (RED) first
+	rail.appendChild(removeBtn);
 
 	// Add duplicate button to the rail (duplicates this exercise to the bottom)
-	const dupBtn = create('button', { type: 'button', class: 'row-dup-btn', textContent: '⎘', title: 'Duplicate' });
+	const dupBtn = create('button', { type: 'button', class: 'row-dup-btn', textContent: '📄', title: 'Duplicate' });
 	dupBtn.addEventListener('click', () => {
 		// read current card values and call addExercise to append a copy
 		const nameVal = card.querySelector('.exercise-name-input')?.value || '';
@@ -199,7 +221,7 @@ function addExercise(ex = {}) {
 
 	if (App.workoutStarted) {
 		ensureTimeCell(card); // Ensure time cell exists
-		createDoneButton(card); // <-- Appends doneBtn (GREEN) second
+		createDoneButton(card);
 		rail.classList.add('workout-active');
 	}
 	wireRowControls(card);
@@ -211,7 +233,7 @@ function addExercise(ex = {}) {
 
 	// restore time if provided
 	if (ex.time != null) {
-		ensureTimeCell(card); // <-- Appends timeCell (TIME) third
+		ensureTimeCell(card);
 	}
 	
 	container.appendChild(card);
@@ -332,11 +354,6 @@ function stopRowTimer(index) {
 		App.rowTimers[index] = null;
 	}
 	if (App.activeRowIndex === index) App.activeRowIndex = null;
-}
-
-function computeTotalFromRows() {
-	const cards = Array.from($('workoutListContainer').children);
-	return cards.reduce((sum, r) => sum + (parseInt(r.querySelector('.time-display')?.dataset.seconds || '0', 10) || 0), 0);
 }
 
 // ---------- Workout global timer ----------
@@ -545,18 +562,18 @@ function startWorkout() {
 	}
 
 	if (!cards.length) {
-		alert('Add at least one exercise first.');
+		showModal('Add at least one exercise first.');
 		return;
 	}
 
 	document.body.classList.add('show-workout');
 
 	cards.forEach(card => {
-		// *** FIX: Ensure time cell exists FIRST to get correct DOM order ***
+		// Ensure time cell exists FIRST to get correct DOM order
 		ensureTimeCell(card); 
 		
 		// Show done button and activate split layout
-		createDoneButton(card); // <-- Now appends *after* time cell
+		createDoneButton(card);
 		const rail = card.querySelector('.card-action-rail');
 		if (rail) rail.classList.add('workout-active');
 	});
@@ -569,7 +586,7 @@ function startWorkout() {
 	App.workoutStarted = true;
 
 	// start first card
-	startRowTimer(0); // <-- This will now just find the existing time cell
+	startRowTimer(0);
 	const first = cards[0];
 	if (first && first.classList.contains('break-card')) {
 		first.dataset.plannedDuration = parseInt(first.dataset.plannedDuration || 0, 10) || 0;
@@ -624,7 +641,10 @@ function saveWorkout() {
 
 	const container = $('workoutListContainer');
 	const cards = Array.from(container.children);
-	if (!cards.length) { alert('Add at least one exercise!'); return; }
+	if (!cards.length) { 
+		showModal('Add at least one exercise!'); 
+		return; 
+	}
 
 	const exercises = cards.map(card => {
 		const td = card.querySelector('.time-display');
@@ -736,12 +756,19 @@ function editWorkout(index) {
 }
 
 function deleteWorkout(index) {
-	if (!confirm('Are you sure you want to delete this workout?')) return;
-	App.workouts.splice(index, 1);
-	saveWorkouts();
-	renderHistory();
-	updateExerciseSelector();
-	renderProgress();
+	// Use the custom modal instead of confirm()
+	showModal('Are you sure you want to delete this workout?', () => {
+		// This code runs if the user clicks 'OK'
+		App.workouts.splice(index, 1);
+		saveWorkouts();
+		renderHistory();
+		updateExerciseSelector();
+		renderProgress();
+	}, 
+	() => {
+		// This code runs if the user clicks 'Cancel' (optional)
+		// In this case, we do nothing.
+	});
 }
 
 function cancelEdit() {
@@ -814,7 +841,7 @@ function renderHistory() {
 				// Check if all weights are effectively zero
 				const allWeightsZero = !ex.weights || !Array.isArray(ex.weights) || ex.weights.every(w => (parseFloat(w) || 0) === 0);
 		
-				// Change 1, 2, 3: Only add weight span if not zero, use "Weight", and omit "(dropset)"
+				// Only add weight span if not zero
 				if (!allWeightsZero) {
 					statsItems.push(`<span><strong>Weight:</strong> ${escapeHtml(String(weightsDisplay || '0'))} ${escapeHtml(unit)}</span>`);
 				}
@@ -932,6 +959,10 @@ function buildProgressData(selected) {
 function createOrUpdateChart(chartId, type, labels, data, datasetLabel) {
 	const canvas = $(chartId);
 	if (!canvas) return;
+	// Check if the canvas is rendered
+	if (canvas.offsetParent === null) {
+		return; // Don't try to render a chart on a hidden canvas
+	}
 	const colors = chartColors();
 	const cfg = {
 		type: 'line',
@@ -968,44 +999,38 @@ function createOrUpdateChart(chartId, type, labels, data, datasetLabel) {
 	}
 }
 
+function destroyCharts() {
+	Object.keys(App.charts).forEach(key => {
+		if (App.charts[key]) {
+			App.charts[key].destroy();
+			App.charts[key] = null;
+		}
+	});
+}
+
 function renderProgress() {
+	// Destroy existing charts to prevent rendering issues
+	destroyCharts();
+	
+	// Re-create charts
 	updateExerciseSelector();
 	const selected = $('exerciseSelect')?.value || '__all';
 	const d = buildProgressData(selected);
 
-	// Difficulty chart
 	createOrUpdateChart(
-		'difficultyChart',
-		'difficulty',
-		d.labels,
-		d.difficultyData,
+		'difficultyChart', 'difficulty', d.labels, d.difficultyData,
 		selected === '__all' ? 'Avg Difficulty (all exercises)' : `Avg Difficulty — ${selected}`
 	);
-
-	// Weight chart
 	createOrUpdateChart(
-		'weightChart',
-		'weight',
-		d.labels,
-		d.weightData,
+		'weightChart', 'weight', d.labels, d.weightData,
 		selected === '__all' ? `Total Load (Volume) (${App.settings.defaultUnit})` : `Total Load — ${selected} (${App.settings.defaultUnit})`
 	);
-
-	// Duration chart
 	createOrUpdateChart(
-		'durationChart',
-		'duration',
-		d.labels,
-		d.durationData,
+		'durationChart', 'duration', d.labels, d.durationData,
 		selected === '__all' ? 'Workout Duration (sec)' : `Duration — ${selected} (sec)`
 	);
-
-	// Break chart
 	createOrUpdateChart(
-		'breakChart',
-		'break',
-		d.labels,
-		d.breakData,
+		'breakChart', 'break', d.labels, d.breakData,
 		selected === '__all' ? 'Total Break Time (sec)' : `Avg Break After — ${selected} (sec)`
 	);
 }
@@ -1054,11 +1079,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	// progress filters
 	$('exerciseSelect').addEventListener('change', renderProgress);
+	
+	// modal buttons
+	$('modalConfirmBtn').addEventListener('click', () => {
+		if (App.modal.onConfirm) {
+			App.modal.onConfirm();
+		}
+		hideModal();
+	});
+	$('modalCancelBtn').addEventListener('click', () => {
+		if (App.modal.onCancel) {
+			App.modal.onCancel();
+		}
+		hideModal();
+	});
+	$('modalOverlay').addEventListener('click', (e) => {
+		if (e.target === $('modalOverlay')) {
+			hideModal();
+		}
+	});
 
 	// initial render
 	renderHistory();
 	updateExerciseSelector();
-	renderProgress();
+	// Don't render progress initially, wait for tab click
+	
 	attachPanelResizeObserver();
 
 	// tabs
@@ -1074,12 +1119,16 @@ document.addEventListener('DOMContentLoaded', () => {
 			
 			// Re-render progress charts if its tab is selected
 			if (btn.dataset.target === 'progress-panel') {
+				// Use setTimeout to ensure the panel is visible before rendering
 				setTimeout(() => {
-					Object.values(App.charts).forEach(chart => {
-						if (chart) chart.resize();
-					});
+					renderProgress();
 				}, 50);
 			}
 		});
 	});
+	
+	// Manually render history and progress for the first time
+	// Note: Progress charts are now rendered when the tab is clicked.
+	renderHistory();
+	updateExerciseSelector();
 });

@@ -21,6 +21,9 @@
 
 	--btn-edit: #38bdf8;
 	--btn-edit-hover: #0ea5e9;
+	
+	--modal-bg: #ffffff;
+	--modal-shadow: rgba(0, 0, 0, 0.1);
 }
 
 body.dark {
@@ -46,6 +49,9 @@ body.dark {
 
 	--btn-edit: #38bdf8;
 	--btn-edit-hover: #0ea5e9;
+	
+	--modal-bg: #23272f;
+	--modal-shadow: rgba(0, 0, 0, 0.3);
 }
 
 * {
@@ -56,7 +62,8 @@ html, body {
 	height: 100%;
 	margin: 0;
 	padding: 0;
-	font-family: Arial, sans-serif;
+	/* Use native system fonts for a better mobile feel */
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 	background: var(--bg);
 	color: var(--fg);
 	overflow-x: hidden;
@@ -68,49 +75,52 @@ h2 {
 	text-align: center;
 }
 
+h3 {
+	font-size: 1rem;
+	font-weight: 600;
+	margin: 16px 0 8px 0;
+	text-align: center;
+	color: var(--fg);
+}
+
 .container {
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
 	padding: 12px;
-	padding-top: 70px; /* Add space for fixed nav */
+	/* Add space for fixed top nav */
+	padding-top: 70px;
 }
 
-.main-panel, .history-panel, .progress-panel {
+.main-panel, .history-panel, .progress-panel, .settings-panel {
 	background: var(--panel);
 	border: 1px solid var(--border);
 	border-radius: 10px;
 	width: 100%;
 	max-width: 640px;
 	margin: 0 auto;
+	display: none; /* Hide all panels by default */
+}
+
+/* Show only active panel */
+.main-panel.active,
+.progress-panel.active,
+.history-panel.active,
+.settings-panel.active {
+	display: block;
 }
 
 /* Special styling for main panel */
 .main-panel {
 	padding: 0;
+	/* Space for fixed bottom buttons */
 	padding-bottom: 160px;
 	background: transparent;
 	border: none;
 }
 
-.history-panel, .progress-panel {
+.history-panel, .progress-panel, .settings-panel {
 	padding: 8px;
-}
-
-/* Settings Panel */
-.settings-panel {
-	background: var(--panel);
-	border: 1px solid var(--border);
-	border-radius: 10px;
-	width: 100%;
-	max-width: 640px;
-	margin: 0 auto;
-	padding: 8px;
-	display: none;
-}
-
-.settings-panel.active {
-	display: block;
 }
 
 .settings-content {
@@ -185,6 +195,9 @@ button {
 	transition: background 0.18s, box-shadow 0.18s;
 	box-shadow: 0 1px 3px rgba(30,41,59,0.08);
 	margin: 4px 0;
+	/* Mobile tap improvements */
+	-webkit-tap-highlight-color: transparent;
+	touch-action: manipulation;
 }
 
 button:hover, button:focus {
@@ -256,14 +269,9 @@ button:hover, button:focus {
 	-webkit-overflow-scrolling: touch;
 }
 
-table {
-	width: 100%;
-	border-collapse: collapse;
-}
-
 /*
-  Made selectors more specific (e.g., .workout-card.exercise-done)
-  to override the base .workout-card background.
+Made selectors more specific (e.g., .workout-card.exercise-done)
+to override the base .workout-card background.
 */
 .workout-card.exercise-done {
 	background: rgba(0, 250, 0, 0.12);
@@ -280,36 +288,6 @@ table {
 	border-color: #f59e0b;
 }
 
-.flash-bg {
-	animation: flash-bg 1s step-start infinite;
-}
-
-@keyframes flash-bg {
-	0%   { background-color: inherit; }
-	50%  { background-color: rgba(255, 0, 0, 0.16); }
-	100% { background-color: inherit; }
-}
-
-/* History buttons */
-.history-btns {
-	display: flex;
-	gap: 12px;
-	justify-content: center;
-	margin-top: 10px;
-	margin-bottom: 4px;
-}
-
-.history-btns button {
-	flex: 0 0 auto;
-	padding: 10px 22px;
-	font-size: 1rem;
-	border-radius: 10px;
-	border: none;
-	font-weight: 500;
-	box-shadow: 0 1px 3px rgba(30,41,59,0.08);
-	transition: background 0.18s;
-}
-
 /* Add spacing between history entries */
 .history-entry {
 	margin-bottom: 16px;
@@ -323,20 +301,7 @@ table {
 	border-bottom: none;
 }
 
-/* Increase gap between history buttons */
-.history-btns {
-	gap: 18px;
-	margin-top: 16px;
-	margin-bottom: 8px;
-}
-
 /* Add spacing between edit and delete buttons in history entries */
-.history-actions {
-	display: flex;
-	gap: 12px;
-	margin-top: 6px;
-}
-
 .history-entry .edit-btn,
 .history-entry .delete-btn {
 	margin-right: 8px;
@@ -353,16 +318,18 @@ table {
 	padding-bottom: 20px;
 }
 
-.progress-panel .chart-container {
-	margin-bottom: 32px;
+.progress-panel select {
+	width: 100%;
+	padding: 8px 12px;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	background: var(--bg);
+	color: var(--fg);
+	font-size: 1rem;
 }
 
-.progress-panel .chart-container h3 {
-	font-size: 1rem;
-	font-weight: 600;
-	margin: 16px 0 8px 0;
-	text-align: center;
-	color: var(--fg);
+.progress-panel .chart-container {
+	margin-bottom: 32px;
 }
 
 .progress-panel canvas {
@@ -413,18 +380,6 @@ table {
 .tab-btn:hover:not(.active) {
 	background: var(--btn-hover);
 	color: var(--btn-save);
-}
-
-/* Hide all panels by default */
-.main-panel, .progress-panel, .history-panel {
-	display: none;
-}
-
-/* Show only active panel */
-.main-panel.active,
-.progress-panel.active,
-.history-panel.active {
-	display: block;
 }
 
 /* --- Dark Mode Enhancements --- */
@@ -545,6 +500,14 @@ body.dark .tab-btn:hover:not(.active) {
 	background: var(--btn-end-hover);
 }
 
+.row-dup-btn {
+	background: var(--btn-edit);
+	color: #fff;
+}
+.row-dup-btn:hover {
+	background: var(--btn-edit-hover);
+}
+
 .row-done-btn {
 	background: var(--btn-start);
 	color: #fff;
@@ -578,7 +541,7 @@ body.dark .workout-card .exercise-name-input:focus {
 	padding: 12px;
 }
 
-/* NEW: Wrapper for Reps and Weight */
+/* Wrapper for Reps and Weight */
 .card-row {
 	display: flex;
 	flex: 1 1 100%; /* Make the row take the full width */
@@ -594,12 +557,11 @@ body.dark .workout-card .exercise-name-input:focus {
 	min-width: 120px;
 }
 
-/* NEW: Override fields inside the new row */
 .card-row .card-field {
 	min-width: 0;
 }
 
-/* NEW: Specifics for reps and weight inside the row */
+/* Specifics for reps and weight inside the row */
 .card-row .reps-field {
 	flex: 1 1 80px; /* Smaller basis */
 }
@@ -608,13 +570,6 @@ body.dark .workout-card .exercise-name-input:focus {
 	flex: 2 1 120px; /* Larger basis */
 }
 
-.workout-card .weight-field {
-	/* This is now overridden by .card-row .weight-field, which is fine */
-	flex: 2;
-	min-width: 180px;
-}
-
-/* NEW: Style the new dropset field */
 .workout-card .dropset-field {
 	flex: 1 1 100%; /* Make it take its own line */
 	min-width: 0;
@@ -777,4 +732,63 @@ body.dark .workout-card select {
 }
 .history-card .hist-stats span strong {
 	opacity: 0.8;
+}
+
+/* --- NEW MODAL STYLES (for alert/confirm) --- */
+.modal-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.5);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 2000;
+	padding: 16px;
+}
+
+.modal-box {
+	background: var(--modal-bg);
+	border-radius: 12px;
+	padding: 24px;
+	box-shadow: 0 4px 12px var(--modal-shadow);
+	width: 100%;
+	max-width: 320px;
+	text-align: center;
+}
+
+.modal-box p {
+	margin: 0 0 20px 0;
+	font-size: 1.1rem;
+	line-height: 1.5;
+}
+
+.modal-actions {
+	display: flex;
+	gap: 12px;
+	justify-content: center;
+}
+
+.modal-actions button {
+	flex: 1;
+}
+
+/* Use the "save" style for the main confirm button */
+#modalConfirmBtn {
+	background: var(--btn-save);
+	color: #fff;
+}
+#modalConfirmBtn:hover {
+	background: var(--btn-save-hover);
+}
+
+/* Use the "regular" style for the cancel button */
+#modalCancelBtn {
+	background: var(--btn-bg);
+	color: var(--btn-fg);
+}
+#modalCancelBtn:hover {
+	background: var(--btn-hover);
 }

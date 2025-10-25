@@ -4,18 +4,23 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<title>Workout Tracker</title>
-	<link rel="stylesheet" href="style.css" />
+	<!-- Chart.js library -->
 	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	
+	<!-- Link to external stylesheet -->
+	<link rel="stylesheet" href="style.css" />
 </head>
 <body>
+	<!-- Top navigation tabs. Replaced broken icons with emojis -->
 	<nav class="top-tabs">
 		<button class="tab-btn active" data-target="main-panel">📋 Planning</button>
-		<button class="tab-btn" data-target="progress-panel">📊 Progress</button>
-		<button class="tab-btn" data-target="history-panel">🕓 History</button>
+		<button class="tab-btn" data-target="progress-panel">📈 Progress</button>
+		<button class="tab-btn" data-target="history-panel">🗓️ History</button>
 		<button class="tab-btn" data-target="settings-panel">⚙️ Settings</button>
 	</nav>
 
 	<div class="container">
+		<!-- Main Planning Panel -->
 		<div class="main-panel active">
 			<div id="workoutTotalTimer" class="total-timer" style="display:none;">Total Time: 00:00</div>
 			<div class="table-wrapper">
@@ -29,6 +34,8 @@
 				<button id="cancelEditBtn" style="display:none;">Cancel Edit</button>
 			</div>
 		</div>
+		
+		<!-- Progress Panel -->
 		<div class="progress-panel">
 			<h2>Progress</h2>
 			<select id="exerciseSelect"><option value="__all">All exercises</option></select>
@@ -49,10 +56,14 @@
 				<canvas id="breakChart" aria-label="Break time chart" role="img"></canvas>
 			</div>
 		</div>
+		
+		<!-- History Panel -->
 		<div class="history-panel">
 			<h2>History</h2>
 			<div id="history"></div>
 		</div>
+		
+		<!-- Settings Panel -->
 		<div class="settings-panel">
 			<h2>Settings</h2>
 			<div class="settings-content">
@@ -74,6 +85,18 @@
 		</div>
 	</div>
 
+	<!-- Modal for custom alerts and confirmations -->
+	<div id="modalOverlay" class="modal-overlay" style="display: none;">
+		<div class="modal-box">
+			<p id="modalText"></p>
+			<div class="modal-actions">
+				<button id="modalCancelBtn" style="display: none;">Cancel</button>
+				<button id="modalConfirmBtn">OK</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Link to external JavaScript -->
 	<script src="script.js"></script>
 </body>
 </html>
