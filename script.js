@@ -778,16 +778,26 @@ function renderHistory() {
 				const unit = ex.unit || App.settings.defaultUnit;
 				const difficultyDisplay = (ex.difficulty != null ? ex.difficulty : '—');
 				
+				const statsItems = [];
+				statsItems.push(`<span><strong>Reps:</strong> ${escapeHtml(String(repsDisplay))}</span>`);
+		
+				// Check if all weights are effectively zero
+				const allWeightsZero = !ex.weights || !Array.isArray(ex.weights) || ex.weights.every(w => (parseFloat(w) || 0) === 0);
+		
+				// Change 1, 2, 3: Only add weight span if not zero, use "Weight", and omit "(dropset)"
+				if (!allWeightsZero) {
+					statsItems.push(`<span><strong>Weight:</strong> ${escapeHtml(String(weightsDisplay || '0'))} ${escapeHtml(unit)}</span>`);
+				}
+		
+				statsItems.push(`<span><strong>Diff:</strong> ${escapeHtml(String(difficultyDisplay))}/10</span>`);
+				
 				card.innerHTML = `
 					<div class="hist-time">${fmtTime(ex.time || 0)}</div>
 					<div class="hist-details">
 						<strong class="hist-name">${escapeHtml(ex.name || '')}</strong>
 						<div class="hist-stats">
-							<span><strong>Reps:</strong> ${escapeHtml(String(repsDisplay))}</span>
-							<span><strong>Load:</strong> ${escapeHtml(String(weightsDisplay || '0'))} ${escapeHtml(unit)}${ex.dropset ? ' (dropset)' : ''}</span>
-							<span><strong>Diff:</strong> ${escapeHtml(String(difficultyDisplay))}/10</span>
+							${statsItems.join('\n')}
 						</div>
-						
 					</div>
 				`;
 			}
