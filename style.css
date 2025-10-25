@@ -89,7 +89,7 @@ h3 {
 	gap: 12px;
 	padding: 12px;
 	/* Add space for fixed top nav */
-	padding-top: 70px;
+	padding-top: 80px; /* Increased for new nav height */
 }
 
 .main-panel, .history-panel, .progress-panel, .settings-panel {
@@ -362,14 +362,31 @@ to override the base .workout-card background.
 
 .tab-btn {
 	flex: 1;
+	display: flex; /* New */
+	flex-direction: column; /* New */
+	align-items: center; /* New */
+	justify-content: center; /* New */
+	gap: 4px; /* New: Space between icon and text */
 	text-align: center;
-	padding: 14px 0;
-	font-weight: 600;
-	font-size: 1rem;
+	padding: 10px 0; /* Adjusted padding */
+	font-weight: 500; /* Slightly lighter */
+	font-size: 0.85rem; /* Slightly smaller text */
 	background: none;
 	border: none;
 	color: var(--fg);
 	cursor: pointer;
+	border-bottom: 3px solid transparent; /* New: for active state */
+}
+
+.tab-btn svg { /* New: Icon styles */
+	width: 24px;
+	height: 24px;
+	stroke: var(--fg);
+	opacity: 0.7;
+}
+
+.tab-btn span { /* New: Text styles */
+	line-height: 1;
 }
 
 .tab-btn.active {
@@ -377,9 +394,19 @@ to override the base .workout-card background.
 	border-bottom: 3px solid var(--btn-save);
 }
 
+.tab-btn.active svg {
+	opacity: 1;
+	stroke: var(--btn-save);
+}
+
 .tab-btn:hover:not(.active) {
 	background: var(--btn-hover);
 	color: var(--btn-save);
+}
+
+.tab-btn:hover:not(.active) svg {
+	stroke: var(--btn-save);
+	opacity: 1;
 }
 
 /* --- Dark Mode Enhancements --- */
@@ -389,17 +416,26 @@ body.dark .top-tabs {
 }
 
 body.dark .tab-btn {
-	color: #e5e7eb;
+	color: #9ca3af; /* Muted color for inactive */
+}
+body.dark .tab-btn svg {
+	stroke: #9ca3af;
 }
 
 body.dark .tab-btn.active {
 	color: #60a5fa;
 	border-bottom-color: #60a5fa;
 }
+body.dark .tab-btn.active svg {
+	stroke: #60a5fa;
+}
 
 body.dark .tab-btn:hover:not(.active) {
 	background: rgba(255,255,255,0.08);
 	color: #60a5fa;
+}
+body.dark .tab-btn:hover:not(.active) svg {
+	stroke: #60a5fa;
 }
 
 /* --- NEW CARD STYLES --- */
@@ -407,7 +443,7 @@ body.dark .tab-btn:hover:not(.active) {
 #workoutListContainer {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: 16px; /* Increased from 12px */
 }
 
 .workout-card {
@@ -439,6 +475,14 @@ body.dark .tab-btn:hover:not(.active) {
 	border: none;
 	box-shadow: none;
 	min-height: 50px;
+	padding: 8px; /* Added padding */
+}
+
+/* Style for icon buttons */
+.card-action-rail button svg {
+	width: 20px;
+	height: 20px;
+	stroke: #fff;
 }
 
 /* When only remove button exists */
@@ -515,6 +559,10 @@ body.dark .tab-btn:hover:not(.active) {
 .row-done-btn:hover {
 	background: var(--btn-start-hover);
 }
+.row-done-btn svg { /* Specific icon style for checkmark */
+	width: 24px;
+	height: 24px;
+}
 
 .workout-card .exercise-name-input {
 	font-weight: bold;
@@ -537,7 +585,7 @@ body.dark .workout-card .exercise-name-input:focus {
 .workout-card .card-body {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 12px;
+	gap: 16px; /* Increased from 12px */
 	padding: 12px;
 }
 
@@ -690,22 +738,39 @@ body.dark .workout-card select {
 	background: var(--bg);
 	border: 1px solid var(--border);
 	border-radius: 6px;
-	padding: 8px;
+	padding: 10px; /* Increased padding */
 	align-items: center;
 }
 
 .history-card .hist-time {
 	flex-shrink: 0;
 	font-weight: bold;
-	font-size: 0.9rem;
+	font-size: 0.8rem; /* Made text smaller */
 	width: 60px; /* Fixed width for time */
 	text-align: center;
 	color: var(--btn-save);
+	display: flex; /* New */
+	flex-direction: column; /* New */
+	gap: 2px; /* New */
+	line-height: 1.2; /* New */
+}
+
+.history-card .hist-time strong { /* New */
+	font-size: 1.1rem; /* Bigger time */
+	font-weight: 700;
+}
+
+.history-card .hist-time span { /* New */
+	text-transform: uppercase;
+	opacity: 0.7;
 }
 
 .history-card.break-card .hist-time {
 	color: var(--fg);
 	opacity: 0.7;
+}
+.history-card.break-card .hist-time strong {
+	color: var(--fg);
 }
 
 .history-card .hist-details {
@@ -723,7 +788,7 @@ body.dark .workout-card select {
 .history-card .hist-stats {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 10px;
+	gap: 12px; /* Increased gap */
 	font-size: 0.9rem;
 }
 

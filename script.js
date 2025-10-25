@@ -2,6 +2,7 @@
 
 const STORAGE_SETTINGS_KEY = 'wt_settings_v1';
 const STORAGE_WORKOUTS_KEY = 'wt_workouts_v1';
+const MQL_DARK = window.matchMedia('(prefers-color-scheme: dark)');
 
 // ---------- App state ----------
 const App = {
@@ -86,7 +87,11 @@ function hideModal() {
 
 // ---------- Appearance ----------
 function applyAppearance() {
-	document.body.classList.toggle('dark', App.settings.appearance === 'dark');
+	let newAppearance = App.settings.appearance;
+	if (newAppearance === 'system') {
+		newAppearance = MQL_DARK.matches ? 'dark' : 'light';
+	}
+	document.body.classList.toggle('dark', newAppearance === 'dark');
 }
 
 // ---------- Row construction (Card-based) ----------
@@ -117,7 +122,12 @@ function createDoneButton(card) {
 	let oldBtn = rail.querySelector('.row-done-btn');
 	if (oldBtn) oldBtn.remove();
 	
-	const btn = create('button', { type: 'button', class: 'row-done-btn', textContent: '✓' });
+	// Use checkmark icon
+	const btn = create('button', { 
+		type: 'button', 
+		class: 'row-done-btn',
+		html: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>'
+	});
 	btn.title = 'Mark done';
 	btn.addEventListener('click', () => completeRow(card));
 	rail.appendChild(btn);
@@ -154,6 +164,7 @@ function addExercise(ex = {}) {
 	const dropset = !!ex.dropset;
 
 	// Card structure (now goes into contentWrapper)
+	// Updated labels for Difficulty and Dropset
 	let html = `
 		<div class="card-header">
 			<div class="card-title">
@@ -180,12 +191,12 @@ function addExercise(ex = {}) {
 			</div>
 
 			<div class="card-field dropset-field">
-				<label class="dropset-label"><input type="checkbox" class="dropset-checkbox"${dropset ? ' checked' : ''}> dropset</label>
+				<label class="dropset-label"><input type="checkbox" class="dropset-checkbox"${dropset ? ' checked' : ''}> Enable Dropset</label>
 				<div class="dropset-inputs" style="display:${dropset ? '' : 'none'}"></div>
 			</div>
 
 			<div class="card-field diff-field">
-				<label>Difficulty</label>
+				<label>Difficulty (RPE 1-10)</label>
 				<div class="difficulty-control">
 					<input type="range" min="1" max="10" value="${difficulty}" class="difficulty-slider">
 					<span class="difficulty-value">${difficulty}</span>
@@ -197,13 +208,23 @@ function addExercise(ex = {}) {
 
 	contentWrapper.innerHTML = html;
 
-	// Add remove button to the rail
-	const removeBtn = create('button', { type: 'button', class: 'row-remove-btn', textContent: 'X', title: 'Remove row' });
+	// Add remove button to the rail (with trash icon)
+	const removeBtn = create('button', { 
+		type: 'button', 
+		class: 'row-remove-btn', 
+		title: 'Remove row',
+		html: '<svg><use href="#icon-trash"></use></svg>' 
+	});
 	removeBtn.addEventListener('click', () => card.remove());
 	rail.appendChild(removeBtn);
 
-	// Add duplicate button to the rail (duplicates this exercise to the bottom)
-	const dupBtn = create('button', { type: 'button', class: 'row-dup-btn', textContent: '📄', title: 'Duplicate' });
+	// Add duplicate button to the rail (with duplicate icon)
+	const dupBtn = create('button', { 
+		type: 'button', 
+		class: 'row-dup-btn', 
+		title: 'Duplicate',
+		html: '<svg><use href="#icon-duplicate"></use></svg>' 
+	});
 	dupBtn.addEventListener('click', () => {
 		// read current card values and call addExercise to append a copy
 		const nameVal = card.querySelector('.exercise-name-input')?.value || '';
@@ -265,7 +286,13 @@ function addBreak(br = {}) {
 	
 	contentWrapper.innerHTML = html;
 	
-	const remBtn = create('button', { type: 'button', class: 'row-remove-btn', textContent: 'X', title: 'Remove break' });
+	// Add remove button (with trash icon)
+	const remBtn = create('button', { 
+		type: 'button', 
+		class: 'row-remove-btn', 
+		title: 'Remove break',
+		html: '<svg><use href="#icon-trash"></use></svg>'
+	});
 	remBtn.addEventListener('click', () => card.remove());
 	rail.appendChild(remBtn);
 
@@ -820,10 +847,17 @@ function renderHistory() {
 
 		(workout.exercises || []).forEach(ex => {
 			const card = create('div', { class: 'history-card' });
+			// Updated time display
+			const timeHtml = `
+				<div class="hist-time">
+					<strong>${fmtTime(ex.time || 0)}</strong>
+					<span>Time</span>
+				</div>`;
+				
 			if (ex.type === 'break') {
 				card.classList.add('break-card');
 				card.innerHTML = `
-					<div class="hist-time">${fmtTime(ex.time || 0)}</div>
+					${timeHtml}
 					<div class="hist-details" style="text-align:center; font-style:italic;">
 						Break: ${ex.duration || 0} sec
 					</div>
@@ -849,7 +883,7 @@ function renderHistory() {
 				statsItems.push(`<span><strong>Diff:</strong> ${escapeHtml(String(difficultyDisplay))}/10</span>`);
 				
 				card.innerHTML = `
-					<div class="hist-time">${fmtTime(ex.time || 0)}</div>
+					${timeHtml}
 					<div class="hist-details">
 						<strong class="hist-name">${escapeHtml(ex.name || '')}</strong>
 						<div class="hist-stats">
@@ -893,7 +927,12 @@ function updateExerciseSelector() {
 
 // ---------- Progress charting (Updated for multiple charts) ----------
 function chartColors() {
-	return App.settings.appearance === 'dark' ? { grid: '#555', tick: '#ccc', legend: '#ddd' } : { grid: '#ddd', tick: '#333', legend: '#111' };
+	// Re-check appearance setting every time we draw
+	let appearance = App.settings.appearance;
+	if (appearance === 'system') {
+		appearance = MQL_DARK.matches ? 'dark' : 'light';
+	}
+	return appearance === 'dark' ? { grid: '#555', tick: '#ccc', legend: '#ddd' } : { grid: '#ddd', tick: '#333', legend: '#111' };
 }
 
 function buildProgressData(selected) {
@@ -1051,6 +1090,7 @@ function attachPanelResizeObserver() {
 
 // ---------- Init & wiring ----------
 document.addEventListener('DOMContentLoaded', () => {
+	// Apply theme *before* anything else
 	applyAppearance();
 
 	// settings panel - load current values and auto-save on change
@@ -1066,8 +1106,16 @@ document.addEventListener('DOMContentLoaded', () => {
 	$('appearance').addEventListener('change', () => {
 		App.settings.appearance = $('appearance').value;
 		saveSettings();
-		applyAppearance();
-		renderProgress();
+		applyAppearance(); // This will apply 'system' logic
+		renderProgress(); // Re-render charts for new theme
+	});
+
+	// Add listener for system theme changes
+	MQL_DARK.addEventListener('change', () => {
+		if (App.settings.appearance === 'system') {
+			applyAppearance();
+			renderProgress(); // Re-render charts if theme changes
+		}
 	});
 
 	// main buttons
