@@ -1,51 +1,51 @@
 :root {
-    --bg: #f7f9fb;
-    --fg: #222;
-    --panel: #fff;
-    --border: #dbeafe;
-    --muted: #e0e7ef;
-    --backdrop: rgba(30,41,59,0.18);
+	--bg: #f7f9fb;
+	--fg: #222;
+	--panel: #fff;
+	--border: #dbeafe;
+	--muted: #e0e7ef;
+	--backdrop: rgba(30,41,59,0.18);
 
-    --btn-bg: #e0e7ef;
-    --btn-fg: #222;
-    --btn-hover: #cbd5e1;
+	--btn-bg: #e0e7ef;
+	--btn-fg: #222;
+	--btn-hover: #cbd5e1;
 
-    --btn-start: #22c55e;
-    --btn-start-hover: #16a34a;
+	--btn-start: #22c55e;
+	--btn-start-hover: #16a34a;
 
-    --btn-save: #2563eb;
-    --btn-save-hover: #1d4ed8;
+	--btn-save: #2563eb;
+	--btn-save-hover: #1d4ed8;
 
-    --btn-end: #ef4444;
-    --btn-end-hover: #dc2626;
+	--btn-end: #ef4444;
+	--btn-end-hover: #dc2626;
 
-    --btn-edit: #38bdf8;
-    --btn-edit-hover: #0ea5e9;
+	--btn-edit: #38bdf8;
+	--btn-edit-hover: #0ea5e9;
 }
 
 body.dark {
-    --bg: #18181b;
-    --fg: #e5e7eb;
-    --panel: #23272f;
-    --border: #334155;
-    --muted: #1e293b;
-    --backdrop: rgba(30,41,59,0.45);
+	--bg: #18181b;
+	--fg: #e5e7eb;
+	--panel: #23272f;
+	--border: #334155;
+	--muted: #1e293b;
+	--backdrop: rgba(30,41,59,0.45);
 
-    --btn-bg: #334155;
-    --btn-fg: #e5e7eb;
-    --btn-hover: #475569;
+	--btn-bg: #334155;
+	--btn-fg: #e5e7eb;
+	--btn-hover: #475569;
 
-    --btn-start: #22c55e;
-    --btn-start-hover: #16a34a;
+	--btn-start: #22c55e;
+	--btn-start-hover: #16a34a;
 
-    --btn-save: #2563eb;
-    --btn-save-hover: #1d4ed8;
+	--btn-save: #2563eb;
+	--btn-save-hover: #1d4ed8;
 
-    --btn-end: #ef4444;
-    --btn-end-hover: #dc2626;
+	--btn-end: #ef4444;
+	--btn-end-hover: #dc2626;
 
-    --btn-edit: #38bdf8;
-    --btn-edit-hover: #0ea5e9;
+	--btn-edit: #38bdf8;
+	--btn-edit-hover: #0ea5e9;
 }
 
 * {
@@ -99,45 +99,45 @@ h2 {
 
 /* Settings Panel */
 .settings-panel {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    width: 100%;
-    max-width: 640px;
-    margin: 0 auto;
-    padding: 8px;
-    display: none;
+	background: var(--panel);
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	width: 100%;
+	max-width: 640px;
+	margin: 0 auto;
+	padding: 8px;
+	display: none;
 }
 
 .settings-panel.active {
-    display: block;
+	display: block;
 }
 
 .settings-content {
-    padding: 20px;
+	padding: 20px;
 }
 
 .setting-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 20px 0;
-    gap: 16px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin: 20px 0;
+	gap: 16px;
 }
 
 .setting-row label {
-    font-weight: 500;
-    font-size: 1rem;
+	font-weight: 500;
+	font-size: 1rem;
 }
 
 .setting-row select {
-    padding: 8px 12px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--bg);
-    color: var(--fg);
-    font-size: 1rem;
-    min-width: 120px;
+	padding: 8px 12px;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	background: var(--bg);
+	color: var(--fg);
+	font-size: 1rem;
+	min-width: 120px;
 }
 
 .total-timer {
@@ -147,141 +147,137 @@ h2 {
 }
 
 .bottom-buttons {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 12px;
-    padding: 12px;
-    background: var(--panel);
-    border-top: 1px solid var(--border);
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-    z-index: 1000;
-    max-width: 640px;
-    margin: 0 auto;
-    box-sizing: border-box;
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	grid-template-rows: 1fr 1fr;
+	gap: 12px;
+	padding: 12px;
+	background: var(--panel);
+	border-top: 1px solid var(--border);
+	box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+	z-index: 1000;
+	max-width: 640px;
+	margin: 0 auto;
+	box-sizing: border-box;
 }
 
 .bottom-buttons button {
-    width: 100%;
-    margin: 0;
-    min-width: 0;
-    box-sizing: border-box;
+	width: 100%;
+	margin: 0;
+	min-width: 0;
+	box-sizing: border-box;
 }
 
 button {
-    padding: 12px 20px;
-    font: inherit;
-    border-radius: 10px;
-    border: none;
-    background: var(--btn-bg);
-    color: var(--btn-fg);
-    cursor: pointer;
-    font-weight: 500;
-    font-size: 1rem;
-    transition: background 0.18s, box-shadow 0.18s;
-    box-shadow: 0 1px 3px rgba(30,41,59,0.08);
-    margin: 4px 0;
+	padding: 12px 20px;
+	font: inherit;
+	border-radius: 10px;
+	border: none;
+	background: var(--btn-bg);
+	color: var(--btn-fg);
+	cursor: pointer;
+	font-weight: 500;
+	font-size: 1rem;
+	transition: background 0.18s, box-shadow 0.18s;
+	box-shadow: 0 1px 3px rgba(30,41,59,0.08);
+	margin: 4px 0;
 }
 
 button:hover, button:focus {
-    background: var(--btn-hover);
-    outline: none;
+	background: var(--btn-hover);
+	outline: none;
 }
 
 #startWorkoutBtn {
-    background: var(--btn-start);
-    color: #fff;
-    transition: background 0.18s;
+	background: var(--btn-start);
+	color: #fff;
+	transition: background 0.18s;
 }
 
 #startWorkoutBtn:hover {
-    background: var(--btn-start-hover);
+	background: var(--btn-start-hover);
 }
 
 /* When workout is active, turn the button red */
 #startWorkoutBtn.end {
-    background: var(--btn-end);
-    color: #fff;
+	background: var(--btn-end);
+	color: #fff;
 }
 
 #startWorkoutBtn.end:hover {
-    background: var(--btn-end-hover);
+	background: var(--btn-end-hover);
 }
 
 #saveWorkoutBtn {
-    background: var(--btn-save);
-    color: #fff;
+	background: var(--btn-save);
+	color: #fff;
 }
 
 #saveWorkoutBtn:hover {
-    background: var(--btn-save-hover);
+	background: var(--btn-save-hover);
 }
 
 #cancelEditBtn, .delete-btn {
-    background: var(--btn-end);
-    color: #fff;
+	background: var(--btn-end);
+	color: #fff;
 }
 
 #cancelEditBtn:hover, .delete-btn:hover {
-    background: var(--btn-end-hover);
+	background: var(--btn-end-hover);
 }
 
 .addExerciseBtn, #addExerciseBtn, #addBreakBtn {
-    background: var(--btn-bg);
-    color: var(--btn-fg);
+	background: var(--btn-bg);
+	color: var(--btn-fg);
 }
 
 .addExerciseBtn:hover, #addExerciseBtn:hover, #addBreakBtn:hover {
-    background: var(--btn-hover);
+	background: var(--btn-hover);
 }
 
 .edit-btn {
-    background: var(--btn-edit);
-    color: #fff;
+	background: var(--btn-edit);
+	color: #fff;
 }
 
 .edit-btn:hover {
-    background: var(--btn-edit-hover);
+	background: var(--btn-edit-hover);
 }
 
 .table-wrapper {
-	/* overflow-x: auto;  <-- REMOVED */
-    overflow-x: visible;
+	overflow-x: visible;
 	width: 100%;
 	border-radius: 8px;
-	/* border: 1px solid var(--border); <-- REMOVED */
-    border: none;
+	border: none;
 	-webkit-overflow-scrolling: touch;
 }
 
-/* REMOVED all old table, th, td styles */
 table {
 	width: 100%;
 	border-collapse: collapse;
-    /* min-width: 900px; <-- REMOVED */
 }
 
-/* *** UPDATED FIX: ***
-  Made selectors more specific (e.g., .workout-card.exercise-done) 
+/*
+  Made selectors more specific (e.g., .workout-card.exercise-done)
   to override the base .workout-card background.
 */
 .workout-card.exercise-done {
-	background: rgba(0, 255, 0, 0.12);
-    border-color: var(--btn-start);
+	background: rgba(0, 250, 0, 0.12);
+	border-color: var(--btn-start);
 }
 
 .workout-card.break-done {
-	background: rgba(0, 255, 0, 0.12);
-    border-color: var(--btn-start);
+	background: rgba(0, 250, 0, 0.12);
+	border-color: var(--btn-start);
 }
 
 .workout-card.break-warning {
 	background: rgba(255, 200, 0, 0.16);
-    border-color: #f59e0b;
+	border-color: #f59e0b;
 }
 
 .flash-bg {
@@ -296,490 +292,472 @@ table {
 
 /* History buttons */
 .history-btns {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    margin-top: 10px;
-    margin-bottom: 4px;
+	display: flex;
+	gap: 12px;
+	justify-content: center;
+	margin-top: 10px;
+	margin-bottom: 4px;
 }
 
 .history-btns button {
-    flex: 0 0 auto;
-    padding: 10px 22px;
-    font-size: 1rem;
-    border-radius: 10px;
-    border: none;
-    font-weight: 500;
-    box-shadow: 0 1px 3px rgba(30,41,59,0.08);
-    transition: background 0.18s;
+	flex: 0 0 auto;
+	padding: 10px 22px;
+	font-size: 1rem;
+	border-radius: 10px;
+	border: none;
+	font-weight: 500;
+	box-shadow: 0 1px 3px rgba(30,41,59,0.08);
+	transition: background 0.18s;
 }
 
 /* Add spacing between history entries */
 .history-entry {
-    margin-bottom: 16px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--muted);
+	margin-bottom: 16px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid var(--muted);
 }
 
 /* Remove border for last entry */
 .history-entry:last-child {
-    margin-bottom: 0;
-    border-bottom: none;
+	margin-bottom: 0;
+	border-bottom: none;
 }
 
 /* Increase gap between history buttons */
 .history-btns {
-    gap: 18px;
-    margin-top: 16px;
-    margin-bottom: 8px;
+	gap: 18px;
+	margin-top: 16px;
+	margin-bottom: 8px;
 }
 
 /* Add spacing between edit and delete buttons in history entries */
 .history-actions {
-    display: flex;
-    gap: 12px;
-    margin-top: 6px;
+	display: flex;
+	gap: 12px;
+	margin-top: 6px;
 }
 
-/* If you don't have a container, target the buttons directly */
 .history-entry .edit-btn,
 .history-entry .delete-btn {
-    margin-right: 8px;
+	margin-right: 8px;
 }
 
 .history-entry .delete-btn {
-    margin-right: 0;
+	margin-right: 0;
 }
 
 .progress-panel {
-    position: relative;
-    max-width: 640px;
-    margin: 0 auto;
-    padding-bottom: 20px;
+	position: relative;
+	max-width: 640px;
+	margin: 0 auto;
+	padding-bottom: 20px;
 }
 
 .progress-panel .chart-container {
-    margin-bottom: 32px;
+	margin-bottom: 32px;
 }
 
 .progress-panel .chart-container h3 {
-    font-size: 1rem;
-    font-weight: 600;
-    margin: 16px 0 8px 0;
-    text-align: center;
-    color: var(--fg);
+	font-size: 1rem;
+	font-weight: 600;
+	margin: 16px 0 8px 0;
+	text-align: center;
+	color: var(--fg);
 }
 
 .progress-panel canvas {
-    display: block;
-    width: 100% !important;
-    aspect-ratio: 2 / 1;
-    margin: 0 auto;
-    z-index: 1;
+	display: block;
+	width: 100% !important;
+	aspect-ratio: 2 / 1;
+	margin: 0 auto;
+	z-index: 1;
 }
 
 /* Slightly shorter charts on small screens */
 @media (max-width: 480px) {
-    .progress-panel canvas { aspect-ratio: 1.8 / 1; }
+	.progress-panel canvas { aspect-ratio: 1.8 / 1; }
 }
 
 /* --- Top Tabs Navigation --- */
 .top-tabs {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  background: var(--panel);
-  border-bottom: 1px solid var(--border);
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 999;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+	display: flex;
+	justify-content: space-around;
+	align-items: center;
+	background: var(--panel);
+	border-bottom: 1px solid var(--border);
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 999;
+	box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .tab-btn {
-  flex: 1;
-  text-align: center;
-  padding: 14px 0;
-  font-weight: 600;
-  font-size: 1rem;
-  background: none;
-  border: none;
-  color: var(--fg);
-  cursor: pointer;
+	flex: 1;
+	text-align: center;
+	padding: 14px 0;
+	font-weight: 600;
+	font-size: 1rem;
+	background: none;
+	border: none;
+	color: var(--fg);
+	cursor: pointer;
 }
 
 .tab-btn.active {
-  color: var(--btn-save);
-  border-bottom: 3px solid var(--btn-save);
+	color: var(--btn-save);
+	border-bottom: 3px solid var(--btn-save);
 }
 
 .tab-btn:hover:not(.active) {
-  background: var(--btn-hover);
-  color: var(--btn-save);
+	background: var(--btn-hover);
+	color: var(--btn-save);
 }
 
 /* Hide all panels by default */
 .main-panel, .progress-panel, .history-panel {
-  display: none;
+	display: none;
 }
 
 /* Show only active panel */
 .main-panel.active,
 .progress-panel.active,
 .history-panel.active {
-  display: block;
+	display: block;
 }
 
 /* --- Dark Mode Enhancements --- */
 body.dark .top-tabs {
-  background: #1f2937; /* slightly lighter than full dark */
-  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+	background: #1f2937; /* slightly lighter than full dark */
+	box-shadow: 0 2px 4px rgba(0,0,0,0.4);
 }
 
 body.dark .tab-btn {
-  color: #e5e7eb;
+	color: #e5e7eb;
 }
 
 body.dark .tab-btn.active {
-  color: #60a5fa;
-  border-bottom-color: #60a5fa;
+	color: #60a5fa;
+	border-bottom-color: #60a5fa;
 }
 
 body.dark .tab-btn:hover:not(.active) {
-  background: rgba(255,255,255,0.08);
-  color: #60a5fa;
+	background: rgba(255,255,255,0.08);
+	color: #60a5fa;
 }
 
 /* --- NEW CARD STYLES --- */
 
 #workoutListContainer {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
 }
 
 .workout-card {
-    background: var(--bg); /* Slightly different from panel */
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(30,41,59,0.08);
-    display: flex; /* Make card a flex container */
-    flex-direction: column; /* Stack actions and content vertically */
-    overflow: hidden; /* Keep rounded corners */
+	background: var(--panel);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	box-shadow: 0 1px 3px rgba(30,41,59,0.08);
+	display: flex;
+	overflow: hidden;
 }
 
 .card-action-rail {
-    display: none; /* REMOVE old side rail */
+	display: flex;
+	flex-direction: column;
+	width: 50px;
+	flex-shrink: 0;
+	border-right: 1px solid var(--border);
 }
 
-.card-actions-header {
-    display: flex;
-    width: 100%;
-    height: 40px; /* Give the header a fixed height */
+.card-action-rail button {
+	flex: 1;
+	margin: 0;
+	border-radius: 0;
+	font-size: 1.2rem;
+	font-weight: bold;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: none;
+	box-shadow: none;
+	min-height: 50px;
 }
 
-.card-actions-header button {
-    flex: 1 1 100%; /* Default to full width */
-    height: 100%;
-    margin: 0;
-    border-radius: 0;
-    font-size: 1.2rem;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    box-shadow: none;
-    border-bottom: 1px solid var(--border);
+/* When only remove button exists */
+.card-action-rail .row-remove-btn {
+	flex: 1;
 }
 
-/* Hide done button by default */
-.card-actions-header .row-done-btn {
-    display: none;
+/* When workout is active, split the rail */
+.card-action-rail.workout-active .row-remove-btn {
+	flex: 1; /* <-- UPDATED: Allow to grow */
+	border-bottom: 1px solid var(--border);
 }
 
-/* When workout is active, split the buttons 50/50 */
-.card-actions-header.workout-active .row-remove-btn {
-    flex-basis: 50%;
-}
-.card-actions-header.workout-active .row-done-btn {
-    display: flex; /* Show the done button */
-    flex-basis: 50%;
-    border-left: 1px solid var(--border);
+.card-action-rail.workout-active .row-done-btn {
+	flex: 1; /* <-- UPDATED: Allow to grow */
 }
 
+.card-action-rail .time-cell {
+	flex: 0; /* <-- UPDATED: Don't grow, take content height */
+	display: none; /* Hidden by default */
+	align-items: center;
+	justify-content: center;
+	padding: 4px;
+	font-size: 0.75rem;
+	font-weight: bold;
+	text-align: center;
+	border-top: 1px solid var(--border);
+	border-bottom: 1px solid var(--border);
+}
+
+/* Show time cell only when workout is active */
+.card-action-rail.workout-active .time-cell {
+	display: flex;
+}
+
+.card-action-rail .time-display {
+	/* writing-mode: vertical-rl; */
+	/* text-orientation: mixed; */
+}
 
 .card-content {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
+	flex-grow: 1;
+	display: flex;
+	flex-direction: column;
 }
 
 .workout-card .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    /* border-bottom: 1px solid var(--border); <-- This is now on the action buttons */
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 8px 12px;
 }
 
 .workout-card .card-title {
-    font-weight: bold;
-    flex: 1;
-}
-
-/* REMOVED .card-actions as it's no longer used in the header */
-.workout-card .card-actions .row-remove-btn {
-    display: none; /* Hide the old button location just in case */
+	font-weight: bold;
+	flex: 1;
 }
 
 .row-remove-btn {
-    background: var(--btn-end);
-    color: #fff;
+	background: var(--btn-end);
+	color: #fff;
 }
 .row-remove-btn:hover {
-    background: var(--btn-end-hover);
+	background: var(--btn-end-hover);
 }
 
+.row-done-btn {
+	background: var(--btn-start);
+	color: #fff;
+}
+.row-done-btn:hover {
+	background: var(--btn-start-hover);
+}
 
-/* Style for the exercise name input */
 .workout-card .exercise-name-input {
-    font-weight: bold;
-    font-size: 1.1rem;
-    border: none;
-    background: transparent;
-    color: var(--fg);
-    padding: 4px;
-    margin: -4px;
-    width: 100%;
+	font-weight: bold;
+	font-size: 1.1rem;
+	border: none;
+	background: transparent;
+	color: var(--fg);
+	padding: 4px;
+	margin: -4px;
+	width: 100%;
 }
 .workout-card .exercise-name-input:focus {
-    outline: none;
-    background: rgba(0,0,0,0.05);
+	outline: none;
+	background: rgba(0,0,0,0.05);
 }
 body.dark .workout-card .exercise-name-input:focus {
-    background: rgba(255,255,255,0.05);
+	background: rgba(255,255,255,0.05);
 }
 
-
-/* REMOVED old .row-remove-btn styles inside .card-actions */
-
-
-/* *** CARD LAYOUT UPDATED TO FLEXBOX *** */
 .workout-card .card-body {
-    display: flex; /* <-- CHANGED */
-    flex-wrap: wrap; /* <-- ADDED */
-    gap: 12px; /* <-- CHANGED */
-    padding: 12px;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	padding: 12px;
 }
 
 .workout-card .card-field {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    flex: 1; /* <-- ADDED: Fields will grow */
-    min-width: 120px; /* <-- ADDED: Fields will wrap if space is tight */
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	flex: 1;
+	min-width: 120px;
 }
 
 .workout-card .card-field label {
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--fg);
-    opacity: 0.7;
+	font-size: 0.8rem;
+	font-weight: 500;
+	color: var(--fg);
+	opacity: 0.7;
 }
 
-/* Make weight and notes full-width */
 .workout-card .weight-field {
-    /* grid-column: 1 / -1; <-- REMOVED */
-    flex: 2; /* <-- ADDED: Give weight more space */
-    min-width: 180px; /* <-- ADDED */
+	flex: 2;
+	min-width: 180px;
 }
 
 .workout-card .diff-field {
-    flex: 2; /* <-- ADDED: Give slider more space */
-    min-width: 150px; /* <-- ADDED */
+	flex: 2;
+	min-width: 150px;
 }
 
-/* Inputs */
 .workout-card input[type="text"],
 .workout-card input[type="number"],
 .workout-card select {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--bg);
-    color: var(--fg);
-    font-size: 1rem;
+	width: 100%;
+	padding: 8px;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	background: var(--bg);
+	color: var(--fg);
+	font-size: 1rem;
 }
 body.dark .workout-card input,
 body.dark .workout-card select {
-    background: #1e293b;
-    border-color: #334155;
+	background: #1e293b;
+	border-color: #334155;
 }
 
 .difficulty-control {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
 }
 .difficulty-control .difficulty-value {
-    font-weight: bold;
-    min-width: 20px;
-    text-align: right;
+	font-weight: bold;
+	min-width: 20px;
+	text-align: right;
 }
 .difficulty-control input[type="range"] {
-    padding: 0;
+	padding: 0;
 }
 
 .weight-line {
-    display: flex;
-    gap: 8px;
+	display: flex;
+	gap: 8px;
 }
 .weight-line .single-weight { flex: 2; }
 .weight-line .unit-select { flex: 1; }
 
 .dropset-label {
-    font-size: 12px;
-    margin-top: 6px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
+	font-size: 12px;
+	margin-top: 6px;
+	display: flex;
+	align-items: center;
+	gap: 4px;
 }
 .dropset-label input { width: auto; }
 
 .dropset-inputs {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-    gap: 6px;
-    margin-top: 6px;
-}
-
-.workout-card .card-footer {
-    padding: 10px;
-    border-top: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.workout-card .time-cell {
-    text-align: center;
-    font-weight: bold;
-    color: var(--fg);
-    opacity: 0.8;
-    font-size: 0.9rem;
-}
-
-.row-done-btn { /* Style the new done button */
-    background: var(--btn-start);
-    color: #fff;
-    /* Remove properties that are now in .card-action-rail button */
-}
-.row-done-btn:hover {
-    background: var(--btn-start-hover);
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+	gap: 6px;
+	margin-top: 6px;
 }
 
 /* Break card specifics */
 .break-card:not(.break-done):not(.break-warning) .card-content {
-    background: var(--muted);
+	background: var(--muted);
 }
 .break-card .card-body {
-    padding: 12px;
+	padding: 12px;
 }
 .break-card .card-title {
-    color: var(--fg);
-    opacity: 0.8;
+	color: var(--fg);
+	opacity: 0.8;
 }
 .break-card .break-body {
-    /* grid-template-columns: 1fr; <-- REMOVED */
-    display: flex; /* <-- ADDED */
-    flex-wrap: wrap; /* <-- ADDED */
-    gap: 8px; /* <-- ADDED */
-    font-size: 1.1rem;
-    align-items: center;
-    justify-content: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	font-size: 1.1rem;
+	align-items: center;
+	justify-content: center;
 }
 .break-card .break-body input {
-    display: inline-block;
-    width: 80px;
-    margin: 0 6px;
+	display: inline-block;
+	width: 80px;
+	margin: 0 6px;
 }
 
-/* Break countdown styles */
 .break-countdown {
-    font-size: 1.2rem;
-    font-weight: bold;
-    text-align: center;
-    display: block;
-    margin-bottom: 10px;
-    flex-basis: 100%; /* <-- ADDED */
+	font-size: 1.2rem;
+	font-weight: bold;
+	text-align: center;
+	display: block;
+	margin-bottom: 10px;
+	flex-basis: 100%;
 }
 .break-body button.small {
-    padding: 6px 8px;
-    font-size: 0.9rem;
-    margin: 0; /* <-- CHANGED */
-    width: auto;
-    flex-shrink: 0; /* <-- ADDED */
-    flex-grow: 1; /* <-- ADDED */
+	padding: 6px 8px;
+	font-size: 0.9rem;
+	margin: 0;
+	width: auto;
+	flex-shrink: 0;
+	flex-grow: 1;
 }
 
 /* --- NEW HISTORY CARD STYLES --- */
 .history-exercise-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-top: 12px;
 }
 
 .history-card {
-    display: flex;
-    gap: 10px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px;
-    align-items: center;
+	display: flex;
+	gap: 10px;
+	background: var(--bg);
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	padding: 8px;
+	align-items: center;
 }
 
 .history-card .hist-time {
-    flex-shrink: 0;
-    font-weight: bold;
-    font-size: 0.9rem;
-    width: 60px; /* Fixed width for time */
-    text-align: center;
-    color: var(--btn-save);
+	flex-shrink: 0;
+	font-weight: bold;
+	font-size: 0.9rem;
+	width: 60px; /* Fixed width for time */
+	text-align: center;
+	color: var(--btn-save);
 }
 
 .history-card.break-card .hist-time {
-    color: var(--fg);
-    opacity: 0.7;
+	color: var(--fg);
+	opacity: 0.7;
 }
 
 .history-card .hist-details {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    overflow: hidden; /* Prevents long text from breaking layout */
+	flex-grow: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	overflow: hidden; /* Prevents long text from breaking layout */
 }
 
 .history-card .hist-name {
-    font-size: 1.1rem;
+	font-size: 1.1rem;
 }
 
 .history-card .hist-stats {
-    display: flex;
-    flex-wrap: wrap; /* Allow wrapping on super small screens */
-    gap: 10px;
-    font-size: 0.9rem;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	font-size: 0.9rem;
 }
 
 .history-card .hist-stats span {
-    opacity: 0.9;
+	opacity: 0.9;
 }
 .history-card .hist-stats span strong {
-    opacity: 0.8;
+	opacity: 0.8;
 }
