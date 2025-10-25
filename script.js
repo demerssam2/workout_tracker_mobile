@@ -180,6 +180,23 @@ function addExercise(ex = {}) {
 	removeBtn.addEventListener('click', () => card.remove());
 	rail.appendChild(removeBtn); // <-- Appends removeBtn (RED) first
 
+	// Add duplicate button to the rail (duplicates this exercise to the bottom)
+	const dupBtn = create('button', { type: 'button', class: 'row-dup-btn', textContent: '⎘', title: 'Duplicate' });
+	dupBtn.addEventListener('click', () => {
+		// read current card values and call addExercise to append a copy
+		const nameVal = card.querySelector('.exercise-name-input')?.value || '';
+		const repsVal = parseInt(card.querySelector('.reps-field input')?.value || 0, 10) || 0;
+		const isDropset = !!card.querySelector('.dropset-checkbox')?.checked;
+		const weightsVal = isDropset
+			? Array.from(card.querySelectorAll('.dropset-inputs input')).map(i => i.value || 0)
+			: [card.querySelector('.single-weight')?.value || 0];
+		const unitVal = card.querySelector('.unit-select')?.value || App.settings.defaultUnit;
+		const diffVal = parseInt(card.querySelector('.difficulty-slider')?.value || 0, 10) || 0;
+
+		addExercise({ type: 'exercise', name: nameVal, reps: repsVal, weights: weightsVal, unit: unitVal, dropset: isDropset, difficulty: diffVal });
+	});
+	rail.appendChild(dupBtn);
+
 	if (App.workoutStarted) {
 		ensureTimeCell(card); // Ensure time cell exists
 		createDoneButton(card); // <-- Appends doneBtn (GREEN) second
@@ -758,6 +775,19 @@ function renderHistory() {
 		const delBtn = create('button', { class: 'delete-btn', textContent: 'Delete' });
 		delBtn.addEventListener('click', () => deleteWorkout(actualIndex));
 
+		// Use-as-template button: append this workout's exercises into the planning area
+		const templateBtn = create('button', { class: 'edit-btn', textContent: 'Use as template' });
+		templateBtn.addEventListener('click', () => {
+			// Append each exercise/break from this history workout into the planning list
+			(workout.exercises || []).forEach(ex => {
+				if (ex.type === 'break') addBreak(ex);
+				else addExercise(ex);
+			});
+			// Switch to Planning tab so user can see the imported template
+			const tab = document.querySelector('.tab-btn[data-target="main-panel"]');
+			if (tab) tab.click();
+		});
+
 		// container for exercise cards
 		const exContainer = create('div', { class: 'history-exercise-list' });
 
@@ -807,6 +837,7 @@ function renderHistory() {
 		div.appendChild(strong);
 		div.appendChild(span);
 		div.appendChild(editBtn);
+		div.appendChild(templateBtn);
 		div.appendChild(delBtn);
 		div.appendChild(exContainer); // Add card container
 		historyDiv.appendChild(div);
