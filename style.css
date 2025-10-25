@@ -519,11 +519,6 @@ body.dark .tab-btn:hover:not(.active) {
 	display: flex;
 }
 
-.card-action-rail .time-display {
-	/* writing-mode: vertical-rl; */
-	/* text-orientation: mixed; */
-}
-
 .card-content {
 	flex-grow: 1;
 	display: flex;
