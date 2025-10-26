@@ -1088,6 +1088,126 @@ function attachPanelResizeObserver() {
 	canvases.forEach(canvas => App.panelResizeObserver.observe(canvas));
 }
 
+// ---------- CSV Export / Import (Full fidelity) ----------
+function exportWorkoutsToCSV() {
+  if (!App.workouts.length) {
+    showModal('No history to export.');
+    return;
+  }
+
+  // Each row = one exercise/break from one workout
+  const header = [
+    'WorkoutIndex',
+    'Date',
+    'Type',
+    'Name',
+    'Reps',
+    'Weights',
+    'Unit',
+    'Difficulty',
+    'Dropset',
+    'Duration',
+    'Time',
+    'TotalTime'
+  ];
+
+  const rows = [];
+
+  App.workouts.forEach((w, wi) => {
+    (w.exercises || []).forEach(ex => {
+      rows.push([
+        wi,
+        `"${w.date}"`,
+        ex.type || '',
+        `"${ex.name || ''}"`,
+        ex.reps ?? '',
+        `"${(Array.isArray(ex.weights) ? ex.weights.join('|') : (ex.weights ?? ''))}"`,
+        ex.unit || '',
+        ex.difficulty ?? '',
+        ex.dropset ? '1' : '0',
+        ex.duration ?? '',
+        ex.time ?? '',
+        w.totalTime ?? ''
+      ]);
+    });
+  });
+
+  const csv = [header.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'workout_history.csv';
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+function importWorkoutsFromCSV(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = e.target.result;
+    const lines = text.split(/\r?\n/).filter(l => l.trim());
+    if (lines.length <= 1) {
+      showModal('No valid CSV data found.');
+      return;
+    }
+
+    const [headerLine, ...rows] = lines;
+    const headers = headerLine.split(',');
+
+    // Rebuild workouts as stored in localStorage
+    const workouts = [];
+    rows.forEach(line => {
+      const cols = line.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
+      if (cols.length < 12) return;
+
+      const [
+        wi, date, type, name, reps, weights, unit, diff, dropset, duration, time, totalTime
+      ] = cols;
+
+      const workoutIndex = parseInt(wi, 10) || 0;
+      if (!workouts[workoutIndex]) {
+        workouts[workoutIndex] = { date, exercises: [], totalTime: parseInt(totalTime) || 0 };
+      }
+
+      workouts[workoutIndex].exercises.push({
+        type,
+        name,
+        reps: parseInt(reps) || 0,
+        weights: weights ? weights.split('|').map(w => parseFloat(w) || 0) : [],
+        unit,
+        difficulty: parseInt(diff) || 0,
+        dropset: dropset === '1',
+        duration: parseInt(duration) || 0,
+        time: parseInt(time) || 0
+      });
+    });
+
+    const imported = workouts.filter(Boolean);
+
+    showModal(
+      'Importing will overwrite your current workout history. Continue?',
+      () => {
+        App.workouts = imported;
+        saveWorkouts();
+        renderHistory();
+        updateExerciseSelector();
+        renderProgress();
+        showModal('Import complete.');
+      },
+      () => {} // cancel
+    );
+  };
+  reader.readAsText(file);
+}
+
+$('exportCSVBtn').addEventListener('click', exportWorkoutsToCSV);
+$('importCSVBtn').addEventListener('click', () => $('importFileInput').click());
+$('importFileInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (file) importWorkoutsFromCSV(file);
+  e.target.value = '';
+});
+
 // ---------- Init & wiring ----------
 document.addEventListener('DOMContentLoaded', () => {
 	// Apply theme *before* anything else
