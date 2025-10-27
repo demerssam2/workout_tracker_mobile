@@ -1,19 +1,26 @@
 'use strict';
 
+// ==========================================================================
+//  Constants
+// ==========================================================================
+
 const STORAGE_SETTINGS_KEY = 'wt_settings_v1';
 const STORAGE_WORKOUTS_KEY = 'wt_workouts_v1';
 const MQL_DARK = window.matchMedia('(prefers-color-scheme: dark)');
 
-// ---------- App state ----------
+// ==========================================================================
+//  App State
+// ==========================================================================
+
 const App = {
 	settings: JSON.parse(localStorage.getItem(STORAGE_SETTINGS_KEY)) || { defaultUnit: 'kg', appearance: 'light' },
 	workouts: JSON.parse(localStorage.getItem(STORAGE_WORKOUTS_KEY)) || [],
-	editIndex: null,
+	editIndex: null, // Index of the workout being edited, or null
 	workoutStarted: false,
 	workoutSeconds: 0,
-	workoutTimerId: null,
-	activeRowIndex: null,
-	rowTimers: [],                // array of interval IDs (per row) or null
+	workoutTimerId: null, // ID for the global workout timer
+	activeRowIndex: null, // Index of the row (card) currently being timed
+	rowTimers: [], // array of interval IDs (per row) or null
 	charts: {
 		difficulty: null,
 		weight: null,
@@ -21,14 +28,22 @@ const App = {
 		break: null
 	},
 	panelResizeObserver: null,
-	// Callbacks for modal
+	// Callbacks for custom modal
 	modal: {
 		onConfirm: null,
 		onCancel: null
 	}
 };
 
-// ---------- Utilities ----------
+// ==========================================================================
+//  Utilities
+// ==========================================================================
+
+/**
+ * Formats seconds into a HH:MM:SS or MM:SS string.
+ * @param {number} secs - The number of seconds.
+ * @returns {string} The formatted time string.
+ */
 const fmtTime = secs => {
 	const s = Math.max(0, parseInt(secs, 10) || 0);
 	const h = Math.floor(s / 3600);
@@ -36,16 +51,42 @@ const fmtTime = secs => {
 	const ss = (s % 60).toString().padStart(2, '0');
 	return h > 0 ? `${h}:${m}:${ss}` : `${m}:${ss}`;
 };
+
+/** Saves the App.settings object to localStorage. */
 const saveSettings = () => localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(App.settings));
+
+/** Saves the App.workouts array to localStorage. */
 const saveWorkouts = () => localStorage.setItem(STORAGE_WORKOUTS_KEY, JSON.stringify(App.workouts));
+
+/**
+ * Escapes a string for safe HTML insertion.
+ * @param {string} str - The string to escape.
+ * @returns {string} The escaped string.
+ */
 const escapeHtml = str => {
 	if (str == null) return '';
 	return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 		.replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 };
 
-// ---------- DOM helpers ----------
+// ==========================================================================
+//  DOM Helpers
+// ==========================================================================
+
+/**
+ * Shorthand for document.getElementById.
+ * @param {string} id - The element ID.
+ * @returns {HTMLElement} The DOM element.
+ */
 const $ = id => document.getElementById(id);
+
+/**
+ * Creates a DOM element with properties and children.
+ * @param {string} tag - The HTML tag name.
+ * @param {object} [props={}] - Properties to set on the element.
+ * @param {...(HTMLElement|string|null)} children - Child nodes to append.
+ * @returns {HTMLElement} The created element.
+ */
 const create = (tag, props = {}, ...children) => {
 	const el = document.createElement(tag);
 	Object.entries(props).forEach(([k, v]) => {
@@ -54,38 +95,45 @@ const create = (tag, props = {}, ...children) => {
 		else if (k.startsWith('data-')) el.dataset[k.slice(5)] = v;
 		else el[k] = v;
 	});
-	children.forEach(c => { if (c == null) return; if (typeof c === 'string') el.appendChild(document.createTextNode(c)); else el.appendChild(c); });
+	children.forEach(c => { 
+		if (c == null) return; 
+		if (typeof c === 'string') el.appendChild(document.createTextNode(c)); 
+		else el.appendChild(c); 
+	});
 	return el;
 };
 
-// ---------- Custom Modal (replaces alert/confirm) ----------
+// ==========================================================================
+//  Custom Modal (replaces alert/confirm)
+// ==========================================================================
+
 /**
- * Shows a custom modal.
+ * Shows a custom modal dialog.
  * @param {string} text - The message to display.
  * @param {function} [onConfirm] - Callback if the 'OK' button is pressed.
- * @param {function} [onCancel] - Callback if the 'Cancel' button is pressed. If provided, 'Cancel' button is shown.
+ * @param {function} [onCancel] - Callback if 'Cancel' is pressed. If provided, the 'Cancel' button is shown.
  */
 function showModal(text, onConfirm, onCancel) {
 	$('modalText').textContent = text;
 	App.modal.onConfirm = onConfirm || null;
 	App.modal.onCancel = onCancel || null;
 	
-	if (onCancel) {
-		$('modalCancelBtn').style.display = 'inline-block';
-	} else {
-		$('modalCancelBtn').style.display = 'none';
-	}
-	
+	$('modalCancelBtn').style.display = onCancel ? 'inline-block' : 'none';
 	$('modalOverlay').style.display = 'flex';
 }
 
+/** Hides the custom modal. */
 function hideModal() {
 	$('modalOverlay').style.display = 'none';
 	App.modal.onConfirm = null;
 	App.modal.onCancel = null;
 }
 
-// ---------- Appearance ----------
+// ==========================================================================
+//  Appearance (Theme)
+// ==========================================================================
+
+/** Applies the correct 'light', 'dark', or 'system' theme to the body. */
 function applyAppearance() {
 	let newAppearance = App.settings.appearance;
 	if (newAppearance === 'system') {
@@ -94,7 +142,15 @@ function applyAppearance() {
 	document.body.classList.toggle('dark', newAppearance === 'dark');
 }
 
-// ---------- Row construction (Card-based) ----------
+// ==========================================================================
+//  Workout Row (Card) Construction
+// ==========================================================================
+
+/**
+ * Finds or creates the time display span in a card's action rail.
+ * @param {HTMLElement} card - The workout card element.
+ * @returns {HTMLElement} The time display span element.
+ */
 function ensureTimeCell(card) {
 	let rail = card.querySelector('.card-action-rail');
 	if (!rail) {
@@ -111,6 +167,11 @@ function ensureTimeCell(card) {
 	return rail.querySelector('.time-display');
 }
 
+/**
+ * Creates and appends a "Done" button (checkmark) to a card's action rail.
+ * @param {HTMLElement} card - The workout card element.
+ * @returns {HTMLElement} The created button element.
+ */
 function createDoneButton(card) {
 	let rail = card.querySelector('.card-action-rail');
 	if (!rail) {
@@ -126,27 +187,40 @@ function createDoneButton(card) {
 	const btn = create('button', { 
 		type: 'button', 
 		class: 'row-done-btn',
+		title: 'Mark done',
 		html: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>'
 	});
-	btn.title = 'Mark done';
 	btn.addEventListener('click', () => completeRow(card));
 	rail.appendChild(btn);
 	return btn;
 }
 
+/**
+ * Wires up event listeners for inputs within a card (slider, dropset checkbox, etc.).
+ * @param {HTMLElement} card - The workout card element.
+ */
 function wireRowControls(card) {
 	const slider = card.querySelector('.difficulty-slider');
 	const sliderVal = card.querySelector('.difficulty-value');
-	if (slider && sliderVal) slider.addEventListener('input', () => { sliderVal.textContent = slider.value; });
+	if (slider && sliderVal) {
+		slider.addEventListener('input', () => { sliderVal.textContent = slider.value; });
+	}
 
 	const dropsetCb = card.querySelector('.dropset-checkbox');
-	if (dropsetCb) dropsetCb.addEventListener('change', e => toggleDropSet(e.target));
+	if (dropsetCb) {
+		dropsetCb.addEventListener('change', e => toggleDropSet(e.target));
+	}
 
 	const repsInput = card.querySelector('.reps-field input[type="number"]');
-	if (repsInput) repsInput.addEventListener('input', () => updateDropSetInputs(repsInput));
+	if (repsInput) {
+		repsInput.addEventListener('input', () => updateDropSetInputs(repsInput));
+	}
 }
 
-// Add exercise card
+/**
+ * Adds a new exercise card to the planning list.
+ * @param {object} [ex={}] - An optional exercise object to pre-fill the card.
+ */
 function addExercise(ex = {}) {
 	const container = $('workoutListContainer');
 	const card = create('div', { class: 'workout-card exercise-card' });
@@ -157,6 +231,7 @@ function addExercise(ex = {}) {
 	card.appendChild(rail);
 	card.appendChild(contentWrapper);
 
+	// Get values or set defaults
 	const name = escapeHtml(ex.name || '');
 	const reps = ex.reps ?? 10;
 	const difficulty = ex.difficulty ?? 5;
@@ -164,7 +239,6 @@ function addExercise(ex = {}) {
 	const dropset = !!ex.dropset;
 
 	// Card structure (now goes into contentWrapper)
-	// Updated labels for Difficulty and Dropset
 	let html = `
 		<div class="card-header">
 			<div class="card-title">
@@ -205,10 +279,9 @@ function addExercise(ex = {}) {
 			
 		</div>
 	`;
-
 	contentWrapper.innerHTML = html;
 
-	// Add remove button to the rail (with trash icon)
+	// Add remove button to the rail
 	const removeBtn = create('button', { 
 		type: 'button', 
 		class: 'row-remove-btn', 
@@ -218,7 +291,7 @@ function addExercise(ex = {}) {
 	removeBtn.addEventListener('click', () => card.remove());
 	rail.appendChild(removeBtn);
 
-	// Add duplicate button to the rail (with duplicate icon)
+	// Add duplicate button to the rail
 	const dupBtn = create('button', { 
 		type: 'button', 
 		class: 'row-dup-btn', 
@@ -226,7 +299,7 @@ function addExercise(ex = {}) {
 		html: '<svg><use href="#icon-duplicate"></use></svg>' 
 	});
 	dupBtn.addEventListener('click', () => {
-		// read current card values and call addExercise to append a copy
+		// Read current card values and call addExercise to append a copy
 		const nameVal = card.querySelector('.exercise-name-input')?.value || '';
 		const repsVal = parseInt(card.querySelector('.reps-field input')?.value || 0, 10) || 0;
 		const isDropset = !!card.querySelector('.dropset-checkbox')?.checked;
@@ -240,19 +313,22 @@ function addExercise(ex = {}) {
 	});
 	rail.appendChild(dupBtn);
 
+	// If workout is active, add timer and done button
 	if (App.workoutStarted) {
-		ensureTimeCell(card); // Ensure time cell exists
+		ensureTimeCell(card);
 		createDoneButton(card);
 		rail.classList.add('workout-active');
 	}
+	
 	wireRowControls(card);
 
+	// Restore dropset values if provided
 	if (dropset && Array.isArray(ex.weights) && ex.weights.length) {
 		const cb = card.querySelector('.dropset-checkbox');
 		if (cb) toggleDropSet(cb, ex.weights);
 	}
 
-	// restore time if provided
+	// Restore time if provided (e.g., from history)
 	if (ex.time != null) {
 		ensureTimeCell(card);
 	}
@@ -260,7 +336,10 @@ function addExercise(ex = {}) {
 	container.appendChild(card);
 }
 
-// Add break card
+/**
+ * Adds a new break card to the planning list.
+ * @param {object} [br={}] - An optional break object to pre-fill the card.
+ */
 function addBreak(br = {}) {
 	const container = $('workoutListContainer');
 	const card = create('div', { class: 'workout-card break-card' });
@@ -273,20 +352,20 @@ function addBreak(br = {}) {
 
 	const duration = parseInt(br.duration || br.plannedDuration || 60, 10) || 60;
 	
+	// Store timer-related data directly on the DOM node
 	card.dataset.plannedDuration = duration;
 	card._timeLeft = duration;
 	card._elapsed = br.time != null ? parseInt(br.time, 10) || 0 : 0;
-	card._countdown = null;
+	card._countdown = null; // Stores the interval ID for the countdown
 
 	let html = `
 		<div class="card-body break-body">
 			Break: <input type="number" min="1" value="${duration}"> sec
 		</div>
 	`;
-	
 	contentWrapper.innerHTML = html;
 	
-	// Add remove button (with trash icon)
+	// Add remove button
 	const remBtn = create('button', { 
 		type: 'button', 
 		class: 'row-remove-btn', 
@@ -296,76 +375,116 @@ function addBreak(br = {}) {
 	remBtn.addEventListener('click', () => card.remove());
 	rail.appendChild(remBtn);
 
+	// If workout is active, add timer and done button
 	if (App.workoutStarted) {
-		ensureTimeCell(card); // Ensure time cell exists
+		ensureTimeCell(card);
 		createDoneButton(card);
 		rail.classList.add('workout-active');
 	}
 	
-	// restore visible time cell if pre-filled
+	// Restore time display if pre-filled
 	if (br.time != null) {
-		ensureTimeCell(card).dataset.seconds = card._elapsed;
-		ensureTimeCell(card).textContent = fmtTime(card._elapsed);
+		const timeDisplay = ensureTimeCell(card);
+		timeDisplay.dataset.seconds = card._elapsed;
+		timeDisplay.textContent = fmtTime(card._elapsed);
 	}
 	
 	container.appendChild(card);
 }
 
-// ---------- Dropset helpers ----------
+// ==========================================================================
+//  Dropset Helpers
+// ==========================================================================
+
+/**
+ * Toggles the visibility of dropset weight inputs based on the checkbox.
+ * @param {HTMLInputElement} checkbox - The "Enable Dropset" checkbox.
+ * @param {Array<number>} [restoreValues=[]] - Optional array of weights to pre-fill.
+ */
 function toggleDropSet(checkbox, restoreValues = []) {
 	const card = checkbox.closest('.workout-card');
 	if (!card) return;
+	
 	const dropsetContainer = card.querySelector('.dropset-inputs');
 	const singleWeight = card.querySelector('.single-weight');
 	const repsInput = card.querySelector('.reps-field input[type="number"]');
-	if (dropsetContainer) dropsetContainer.innerHTML = '';
+	if (!dropsetContainer || !singleWeight || !repsInput) return;
+
+	dropsetContainer.innerHTML = '';
 
 	if (checkbox.checked) {
-		if (dropsetContainer) dropsetContainer.style.display = 'grid';
-		if (singleWeight) singleWeight.style.display = 'none';
-		const count = Math.max(1, parseInt(repsInput?.value || 1, 10));
+		dropsetContainer.style.display = 'grid';
+		singleWeight.style.display = 'none';
+		const count = Math.max(1, parseInt(repsInput.value || 1, 10));
 		for (let i = 0; i < count; i++) {
-			const w = create('input', { type: 'number', min: '0', value: (restoreValues[i] != null) ? restoreValues[i] : (i === 0 && singleWeight && singleWeight.value ? singleWeight.value : 0) });
+			const val = (restoreValues[i] != null) ? restoreValues[i] : (i === 0 && singleWeight.value ? singleWeight.value : 0);
+			const w = create('input', { type: 'number', min: '0', value: val });
 			dropsetContainer.appendChild(w);
 		}
 	} else {
-		if (dropsetContainer) dropsetContainer.style.display = 'none';
-		if (dropsetContainer) dropsetContainer.innerHTML = '';
-		if (singleWeight) singleWeight.style.display = '';
-		if (restoreValues.length && singleWeight) singleWeight.value = restoreValues[0];
+		dropsetContainer.style.display = 'none';
+		singleWeight.style.display = '';
+		if (restoreValues.length) {
+			singleWeight.value = restoreValues[0];
+		}
 	}
 }
 
+/**
+ * Updates the number of dropset inputs to match the reps input.
+ * @param {HTMLInputElement} repsInput - The reps input field.
+ */
 function updateDropSetInputs(repsInput) {
 	const card = repsInput.closest('.workout-card');
 	if (!card) return;
+	
 	const dropsetCb = card.querySelector('.dropset-checkbox');
 	if (!dropsetCb || !dropsetCb.checked) return;
+	
 	const container = card.querySelector('.dropset-inputs');
-	const current = Array.from(container.querySelectorAll('input'));
+	if (!container) return;
+
+	const currentInputs = Array.from(container.querySelectorAll('input'));
 	const newCount = Math.max(1, parseInt(repsInput.value || 1, 10));
-	if (current.length < newCount) {
-		const lastVal = current.length ? current[current.length - 1].value : 0;
-		for (let i = current.length; i < newCount; i++) {
+
+	if (currentInputs.length < newCount) {
+		// Add new inputs
+		const lastVal = currentInputs.length ? currentInputs[currentInputs.length - 1].value : 0;
+		for (let i = currentInputs.length; i < newCount; i++) {
 			const w = create('input', { type: 'number', min: '0', value: lastVal || 0 });
 			container.appendChild(w);
 		}
-	} else if (current.length > newCount) {
-		for (let i = current.length - 1; i >= newCount; i--) container.removeChild(current[i]);
+	} else if (currentInputs.length > newCount) {
+		// Remove extra inputs
+		for (let i = currentInputs.length - 1; i >= newCount; i--) {
+			container.removeChild(currentInputs[i]);
+		}
 	}
 }
 
-// ---------- Timers per row (stopwatch behavior) ----------
+// ==========================================================================
+//  Row Timers (Stopwatch)
+// ==========================================================================
+
+/**
+ * Starts a stopwatch timer for a specific row (card).
+ * @param {number} index - The index of the card in the list.
+ */
 function startRowTimer(index) {
 	const cards = Array.from($('workoutListContainer').children);
 	if (index < 0 || index >= cards.length) return;
-	if (App.activeRowIndex !== null && App.activeRowIndex !== index) stopRowTimer(App.activeRowIndex);
+	
+	// Stop other active timer
+	if (App.activeRowIndex !== null && App.activeRowIndex !== index) {
+		stopRowTimer(App.activeRowIndex);
+	}
 
 	const card = cards[index];
 	const display = ensureTimeCell(card);
 	let elapsed = parseInt(display.dataset.seconds || '0', 10) || 0;
 
 	if (App.rowTimers[index]) clearInterval(App.rowTimers[index]);
+	
 	App.rowTimers[index] = setInterval(() => {
 		elapsed++;
 		display.dataset.seconds = elapsed;
@@ -375,24 +494,37 @@ function startRowTimer(index) {
 	App.activeRowIndex = index;
 }
 
+/**
+ * Stops the stopwatch timer for a specific row.
+ * @param {number} index - The index of the card in the list.
+ */
 function stopRowTimer(index) {
 	if (App.rowTimers[index]) {
 		clearInterval(App.rowTimers[index]);
 		App.rowTimers[index] = null;
 	}
-	if (App.activeRowIndex === index) App.activeRowIndex = null;
+	if (App.activeRowIndex === index) {
+		App.activeRowIndex = null;
+	}
 }
 
-// ---------- Workout global timer ----------
+// ==========================================================================
+//  Global Workout Timer
+// ==========================================================================
+
+/** Starts the global workout timer. */
 function startWorkoutTimer() {
 	const display = $('workoutTotalTimer');
 	App.workoutSeconds = 0;
 	if (App.workoutTimerId) clearInterval(App.workoutTimerId);
+	
 	App.workoutTimerId = setInterval(() => {
 		App.workoutSeconds++;
 		display.textContent = 'Total Time: ' + fmtTime(App.workoutSeconds);
 	}, 1000);
 }
+
+/** Stops the global workout timer. */
 function stopWorkoutTimer() {
 	if (App.workoutTimerId) {
 		clearInterval(App.workoutTimerId);
@@ -400,7 +532,14 @@ function stopWorkoutTimer() {
 	}
 }
 
-// ---------- Break countdowns (fixed) ----------
+// ==========================================================================
+//  Break Countdown Timer
+// ==========================================================================
+
+/**
+ * Starts a countdown timer for a break card.
+ * @param {HTMLElement} breakCard - The break card element.
+ */
 function startBreakCountdown(breakCard) {
 	const cell = breakCard.querySelector('.break-body');
 	if (!cell) return;
@@ -408,39 +547,39 @@ function startBreakCountdown(breakCard) {
 	const planned = parseInt(breakCard.dataset.plannedDuration || 0, 10) || 60;
 	breakCard.dataset.plannedDuration = planned;
 
-	// initialize runtime trackers if missing
+	// Initialize runtime trackers if missing
 	if (breakCard._timeLeft == null) breakCard._timeLeft = planned;
 	if (breakCard._elapsed == null) breakCard._elapsed = 0;
 	if (breakCard._countdown) {
-		return; // already running
+		return; // Already running
 	}
 
-	ensureTimeCell(breakCard); // ensure there's a time-display
+	ensureTimeCell(breakCard); // Ensure there's a time-display
 
-	// clean the cell and build UI
+	// Clean the cell and build countdown UI
 	cell.innerHTML = '';
 	const display = create('span', { class: 'break-countdown' });
 	cell.appendChild(display);
 
+	// Create control buttons
 	const btnAdd = create('button', { type: 'button', class: 'small', textContent: '+10s' });
 	const btnSub = create('button', { type: 'button', class: 'small', textContent: '-10s' });
 	const btnReset = create('button', { type: 'button', class: 'small', textContent: 'Reset' });
 	const btnSkip = create('button', { type: 'button', class: 'small', textContent: 'Skip' });
+	
+	[btnAdd, btnSub, btnReset, btnSkip].forEach(b => cell.appendChild(b));
 
-	[btnAdd, btnSub, btnReset, btnSkip].forEach(b => {
-		b.style.padding = '6px 8px';
-		b.style.marginLeft = '6px';
-		cell.appendChild(b);
-	});
-
+	/** Updates the countdown display and handles completion. */
 	const updateDisplay = () => {
 		const left = breakCard._timeLeft;
+		
 		if (left <= 0) {
+			// Break is done
 			display.textContent = 'Break complete!';
 			breakCard.classList.remove('break-warning');
 			breakCard.classList.add('break-done');
 
-			// Hide done button on auto-complete
+			// Hide "Done" button on auto-complete
 			const doneBtn = breakCard.querySelector('.row-done-btn');
 			if (doneBtn) {
 				doneBtn.style.display = 'none';
@@ -451,20 +590,22 @@ function startBreakCountdown(breakCard) {
 				breakCard._countdown = null;
 			}
 
-			// record actual elapsed seconds
+			// Record actual elapsed seconds to the main time display
 			const timeDisplay = breakCard.querySelector('.time-display');
 			if (timeDisplay) {
 				timeDisplay.dataset.seconds = parseInt(breakCard._elapsed || 0, 10) || 0;
 				timeDisplay.textContent = fmtTime(parseInt(breakCard._elapsed || 0, 10) || 0);
 			}
 
-			// move to next row
+			// --- Auto-advance to the next row ---
 			const cards = Array.from($('workoutListContainer').children);
 			const idx = cards.indexOf(breakCard);
 			stopRowTimer(idx);
+			
 			if (idx + 1 < cards.length) {
 				const next = cards[idx + 1];
 				startRowTimer(idx + 1);
+				// If next card is also a break, start its countdown
 				if (next.classList.contains('break-card')) {
 					const inp = next.querySelector('.break-body input[type="number"]');
 					if (inp) next.dataset.plannedDuration = parseInt(inp.value || 0, 10) || 0;
@@ -473,13 +614,16 @@ function startBreakCountdown(breakCard) {
 					startBreakCountdown(next);
 				}
 			}
+			// --- End auto-advance ---
+
 		} else {
+			// Break is in progress
 			display.textContent = 'Break: ' + left + 's';
-			if (left <= 10) breakCard.classList.add('break-warning');
-			else breakCard.classList.remove('break-warning');
+			breakCard.classList.toggle('break-warning', left <= 10);
 		}
 	};
 
+	/** Restarts the interval if it's not already running. */
 	const restartCountdown = () => {
 		if (breakCard._timeLeft > 0 && !breakCard._countdown) {
 			breakCard._countdown = setInterval(() => {
@@ -490,6 +634,7 @@ function startBreakCountdown(breakCard) {
 		}
 	};
 
+	// Wire up countdown controls
 	btnAdd.addEventListener('click', () => {
 		breakCard._timeLeft = (parseInt(breakCard._timeLeft, 10) || 0) + 10;
 		updateDisplay();
@@ -506,18 +651,24 @@ function startBreakCountdown(breakCard) {
 		updateDisplay();
 		restartCountdown();
 	});
-
 	btnSkip.addEventListener('click', () => {
 		breakCard._timeLeft = 0;
 		updateDisplay();
 	});
 
-	// initial render & start
+	// Initial render & start
 	updateDisplay();
 	restartCountdown();
 }
 
-// ---------- Completing a row (card) ----------
+// ==========================================================================
+//  Workout Flow (Start, End, Complete Row)
+// ==========================================================================
+
+/**
+ * Handles manually completing a row (exercise or break).
+ * @param {HTMLElement} card - The card to complete.
+ */
 function completeRow(card) {
 	const container = $('workoutListContainer');
 	const cards = Array.from(container.children);
@@ -525,6 +676,7 @@ function completeRow(card) {
 	if (idx < 0) return;
 
 	if (card.classList.contains('break-card')) {
+		// If it's a break, stop its countdown
 		if (card._countdown) {
 			clearInterval(card._countdown);
 			card._countdown = null;
@@ -532,28 +684,31 @@ function completeRow(card) {
 		card.classList.remove('break-warning');
 		card.classList.add('break-done');
 
-		// ensure the time display records proper elapsed seconds
+		// Ensure the time display records proper elapsed seconds
 		const td = card.querySelector('.time-display');
 		if (td) {
 			td.dataset.seconds = parseInt(card._elapsed || 0, 10) || 0;
 			td.textContent = fmtTime(parseInt(card._elapsed || 0, 10) || 0);
 		}
 	} else {
+		// It's an exercise card
 		card.classList.add('exercise-done');
 	}
 
-	// Hide the done button
+	// Hide the "Done" button
 	const doneBtn = card.querySelector('.row-done-btn');
 	if (doneBtn) {
 		doneBtn.style.display = 'none';
 	}
 
-	stopRowTimer(idx);
+	stopRowTimer(idx); // Stop this row's stopwatch
 
-	// start next card's timer and possibly a break
+	// --- Auto-advance to the next row ---
 	if (idx + 1 < cards.length) {
 		const next = cards[idx + 1];
-		startRowTimer(idx + 1);
+		startRowTimer(idx + 1); // Start next row's stopwatch
+		
+		// If next card is a break, start its countdown
 		if (next.classList.contains('break-card')) {
 			const inp = next.querySelector('.break-body input[type="number"]');
 			if (inp) next.dataset.plannedDuration = parseInt(inp.value || 0, 10) || 0;
@@ -562,7 +717,7 @@ function completeRow(card) {
 			startBreakCountdown(next);
 		}
 	} else {
-		// last row finished -> end workout
+		// This was the last row, end the workout
 		endWorkout();
 		const btn = $('startWorkoutBtn');
 		btn.textContent = 'Start';
@@ -572,22 +727,32 @@ function completeRow(card) {
 	}
 }
 
-// ---------- Start / End workout ----------
+/**
+ * Toggles the workout state (Start or End).
+ */
 function startWorkout() {
 	const btn = $('startWorkoutBtn');
 	const container = $('workoutListContainer');
 	const cards = Array.from(container.children);
 
 	if (btn.dataset.active === 'true') {
-		// End
-		endWorkout();
-		btn.textContent = 'Start';
-		btn.dataset.active = 'false';
-		btn.classList.remove('end');
-		document.body.classList.remove('show-workout');
+		// --- ENDING WORKOUT ---
+		showModal('Are you sure you want to end this workout?', 
+			() => {
+				endWorkout();
+				btn.textContent = 'Start';
+				btn.dataset.active = 'false';
+				btn.classList.remove('end');
+				document.body.classList.remove('show-workout');
+			},
+			() => {
+				// Do nothing, user cancelled
+			}
+		);
 		return;
 	}
 
+	// --- STARTING WORKOUT ---
 	if (!cards.length) {
 		showModal('Add at least one exercise first.');
 		return;
@@ -595,11 +760,9 @@ function startWorkout() {
 
 	document.body.classList.add('show-workout');
 
+	// Add "Done" buttons and timers to all cards
 	cards.forEach(card => {
-		// Ensure time cell exists FIRST to get correct DOM order
-		ensureTimeCell(card); 
-		
-		// Show done button and activate split layout
+		ensureTimeCell(card); // Ensure time cell exists FIRST
 		createDoneButton(card);
 		const rail = card.querySelector('.card-action-rail');
 		if (rail) rail.classList.add('workout-active');
@@ -612,7 +775,7 @@ function startWorkout() {
 	$('workoutTotalTimer').textContent = 'Total Time: 00:00';
 	App.workoutStarted = true;
 
-	// start first card
+	// Start the first card
 	startRowTimer(0);
 	const first = cards[0];
 	if (first && first.classList.contains('break-card')) {
@@ -625,17 +788,22 @@ function startWorkout() {
 	startWorkoutTimer();
 }
 
+/**
+ * Cleans up the UI and state when a workout ends.
+ */
 function endWorkout() {
-	// stop all row timers
+	// Stop all row timers
 	App.rowTimers.forEach((id, i) => {
 		if (id) stopRowTimer(i);
 	});
 	App.activeRowIndex = null;
+	App.workoutStarted = false;
+	stopWorkoutTimer();
 
-	// clear break countdowns
+	// Clear break countdowns and reset their UI
 	const cards = Array.from($('workoutListContainer').children);
 	cards.forEach(card => {
-		// Only reset the UI for breaks that were *in progress* but not finished
+		// Only reset the UI for breaks that were *in progress*
 		if (card.classList.contains('break-card') && card._countdown && !card.classList.contains('break-done')) {
 			clearInterval(card._countdown);
 			card._countdown = null;
@@ -645,13 +813,8 @@ function endWorkout() {
 				cell.innerHTML = `Break: <input type="number" min="1" value="${duration}"> sec`;
 			}
 		}
-	});
 
-	stopWorkoutTimer();
-	App.workoutStarted = false;
-
-	// hide done buttons
-	cards.forEach(card => {
+		// Remove "Done" button and active rail state
 		const doneBtn = card.querySelector('.row-done-btn');
 		if (doneBtn) doneBtn.remove();
 		const rail = card.querySelector('.card-action-rail');
@@ -659,9 +822,15 @@ function endWorkout() {
 	});
 }
 
-// ---------- Save / Edit / Delete / Cancel ----------
+// ==========================================================================
+//  Save / Edit / Delete / Cancel
+// ==========================================================================
+
+/**
+ * Saves the current workout plan (or edited workout) to history.
+ */
 function saveWorkout() {
-	// end workout to freeze timers
+	// End workout to freeze timers if active
 	if (App.workoutStarted) {
 		endWorkout();
 	}
@@ -673,14 +842,17 @@ function saveWorkout() {
 		return; 
 	}
 
+	// Read data from all cards
 	const exercises = cards.map(card => {
 		const td = card.querySelector('.time-display');
 		const secs = parseInt(td?.dataset.seconds || 0, 10) || 0;
 
 		if (card.classList.contains('break-card')) {
+			// Save break data
 			const planned = parseInt(card.dataset.plannedDuration || 0, 10) || (parseInt(card.querySelector('.break-body input')?.value || 0, 10) || 0);
 			return { type: 'break', duration: planned, time: secs };
 		} else {
+			// Save exercise data
 			const name = card.querySelector('.exercise-name-input')?.value || '';
 			const reps = parseInt(card.querySelector('.reps-field input')?.value || 0, 10) || 0;
 			let weights = [];
@@ -704,32 +876,30 @@ function saveWorkout() {
 		}
 	});
 
-	// compute total time
-	let totalTime = 0;
-	if (App.workoutSeconds && App.workoutStarted) {
-		totalTime = App.workoutSeconds;
-	} else {
-		totalTime = exercises.reduce((s, ex) => s + (parseInt(ex.time || 0, 10) || 0), 0);
-	}
+	// Compute total time
+	let totalTime = App.workoutSeconds > 0 
+		? App.workoutSeconds 
+		: exercises.reduce((s, ex) => s + (parseInt(ex.time || 0, 10) || 0), 0);
 
 	if (App.editIndex != null) {
+		// Update existing workout
 		App.workouts[App.editIndex].exercises = exercises;
 		App.workouts[App.editIndex].date = new Date().toLocaleString();
 		App.workouts[App.editIndex].totalTime = totalTime;
 		App.editIndex = null;
 		$('cancelEditBtn').style.display = 'none';
 	} else {
+		// Add new workout
 		App.workouts.push({ date: new Date().toLocaleString(), exercises, totalTime });
 	}
 
 	saveWorkouts();
 	renderHistory();
 	updateExerciseSelector();
-	renderProgress();
+	renderProgress(); // Update charts
 
-	// reset container
+	// Reset planning area
 	$('workoutListContainer').innerHTML = '';
-
 	App.workoutSeconds = 0;
 	App.workoutStarted = false;
 	$('workoutTotalTimer').style.display = 'none';
@@ -741,12 +911,15 @@ function saveWorkout() {
 	btn.classList.remove('end');
 }
 
+/**
+ * Loads a workout from history into the planning area for editing.
+ * @param {number} index - The index of the workout in App.workouts.
+ */
 function editWorkout(index) {
 	const container = $('workoutListContainer');
-	// reset container
-	container.innerHTML = '';
+	container.innerHTML = ''; // Clear planning area
 	
-	// If a workout is active, end it before loading another for editing.
+	// If a workout is active, end it
 	if (App.workoutStarted) {
 		endWorkout();
 		const btn = $('startWorkoutBtn');
@@ -757,23 +930,31 @@ function editWorkout(index) {
 	}
 
 	const w = App.workouts[index];
+	if (!w) return;
+	
+	// Re-create cards from history data
 	(w.exercises || []).forEach(ex => {
 		if (ex.type === 'break') addBreak(ex);
 		else addExercise(ex);
 	});
+	
 	App.editIndex = index;
 	$('cancelEditBtn').style.display = 'inline-block';
 	$('workoutTotalTimer').style.display = 'block';
 	$('workoutTotalTimer').textContent = 'Total Time: ' + fmtTime(w.totalTime || 0);
 
-	// restore time displays
+	// Restore time displays and break data
 	const cards = Array.from($('workoutListContainer').children);
 	cards.forEach((card, i) => {
 		const original = (w.exercises || [])[i];
 		if (!original) return;
-		ensureTimeCell(card);
-		const td = card.querySelector('.time-display');
-		if (td) td.dataset.seconds = parseInt(original.time || 0, 10) || 0;
+		
+		const td = ensureTimeCell(card).querySelector('.time-display');
+		if (td) {
+			td.dataset.seconds = parseInt(original.time || 0, 10) || 0;
+			td.textContent = fmtTime(parseInt(original.time || 0, 10) || 0);
+		}
+
 		if (card.classList.contains('break-card')) {
 			card.dataset.plannedDuration = parseInt(original.duration || 0, 10) || 0;
 			card._timeLeft = parseInt(original.duration || 0, 10) || 0;
@@ -782,22 +963,27 @@ function editWorkout(index) {
 	});
 }
 
+/**
+ * Deletes a workout from history.
+ * @param {number} index - The index of the workout to delete.
+ */
 function deleteWorkout(index) {
-	// Use the custom modal instead of confirm()
-	showModal('Are you sure you want to delete this workout?', () => {
-		// This code runs if the user clicks 'OK'
-		App.workouts.splice(index, 1);
-		saveWorkouts();
-		renderHistory();
-		updateExerciseSelector();
-		renderProgress();
-	}, 
-	() => {
-		// This code runs if the user clicks 'Cancel' (optional)
-		// In this case, we do nothing.
-	});
+	showModal('Are you sure you want to delete this workout?', 
+		() => {
+			// OK button pressed
+			App.workouts.splice(index, 1);
+			saveWorkouts();
+			renderHistory();
+			updateExerciseSelector();
+			renderProgress();
+		}, 
+		() => {
+			// Cancel button pressed
+		}
+	);
 }
 
+/** Cancels the editing state and clears the planning area. */
 function cancelEdit() {
 	App.editIndex = null;
 	$('cancelEditBtn').style.display = 'none';
@@ -807,18 +993,24 @@ function cancelEdit() {
 	App.workoutSeconds = 0;
 }
 
-// ---------- History & UI rendering (Card-based) ----------
+// ==========================================================================
+//  History & UI Rendering
+// ==========================================================================
+
+/** Renders the list of past workouts in the History tab. */
 function renderHistory() {
 	const historyDiv = $('history');
 	historyDiv.innerHTML = '';
 
-	// show newest first
+	// Show newest first
 	App.workouts.slice().reverse().forEach((workout, i) => {
 		const actualIndex = App.workouts.length - 1 - i;
 		const div = create('div', { class: 'history-entry' });
+		
 		const strong = create('strong', {}, workout.date);
 		const span = create('span', {}, ' Total Time: ' + fmtTime(workout.totalTime || 0));
 
+		// Edit button
 		const editBtn = create('button', { class: 'edit-btn', textContent: 'Edit' });
 		editBtn.addEventListener('click', () => {
 			editWorkout(actualIndex);
@@ -826,28 +1018,27 @@ function renderHistory() {
 			document.querySelector('.tab-btn[data-target="main-panel"]').click();
 		});
 
+		// Delete button
 		const delBtn = create('button', { class: 'delete-btn', textContent: 'Delete' });
 		delBtn.addEventListener('click', () => deleteWorkout(actualIndex));
 
-		// Use-as-template button: append this workout's exercises into the planning area
+		// Use-as-template button
 		const templateBtn = create('button', { class: 'edit-btn', textContent: 'Use as template' });
 		templateBtn.addEventListener('click', () => {
-			// Append each exercise/break from this history workout into the planning list
 			(workout.exercises || []).forEach(ex => {
 				if (ex.type === 'break') addBreak(ex);
 				else addExercise(ex);
 			});
-			// Switch to Planning tab so user can see the imported template
-			const tab = document.querySelector('.tab-btn[data-target="main-panel"]');
-			if (tab) tab.click();
+			// Switch to Planning tab
+			document.querySelector('.tab-btn[data-target="main-panel"]').click();
 		});
 
-		// container for exercise cards
+		// Container for exercise cards
 		const exContainer = create('div', { class: 'history-exercise-list' });
 
 		(workout.exercises || []).forEach(ex => {
 			const card = create('div', { class: 'history-card' });
-			// Updated time display
+			
 			const timeHtml = `
 				<div class="hist-time">
 					<strong>${fmtTime(ex.time || 0)}</strong>
@@ -865,17 +1056,17 @@ function renderHistory() {
 			} else {
 				card.classList.add('exercise-card');
 				const repsDisplay = ex.reps || 0;
-				const weightsDisplay = ex.dropset ? (Array.isArray(ex.weights) ? ex.weights.join(' → ') : ex.weights) : (Array.isArray(ex.weights) ? ex.weights[0] : ex.weights);
+				const weightsDisplay = ex.dropset 
+					? (Array.isArray(ex.weights) ? ex.weights.join(' → ') : ex.weights) 
+					: (Array.isArray(ex.weights) ? ex.weights[0] : ex.weights);
 				const unit = ex.unit || App.settings.defaultUnit;
 				const difficultyDisplay = (ex.difficulty != null ? ex.difficulty : '—');
 				
 				const statsItems = [];
 				statsItems.push(`<span><strong>Reps:</strong> ${escapeHtml(String(repsDisplay))}</span>`);
 		
-				// Check if all weights are effectively zero
 				const allWeightsZero = !ex.weights || !Array.isArray(ex.weights) || ex.weights.every(w => (parseFloat(w) || 0) === 0);
 		
-				// Only add weight span if not zero
 				if (!allWeightsZero) {
 					statsItems.push(`<span><strong>Weight:</strong> ${escapeHtml(String(weightsDisplay || '0'))} ${escapeHtml(unit)}</span>`);
 				}
@@ -905,40 +1096,62 @@ function renderHistory() {
 	});
 }
 
+/** Updates the exercise name dropdown in the Progress tab. */
 function updateExerciseSelector() {
 	const select = $('exerciseSelect');
 	if (!select) return;
+	
 	const names = new Set();
 	App.workouts.forEach(w => {
 		(w.exercises || []).forEach(ex => {
-			if (ex.type === 'exercise' && ex.name && ex.name.trim()) names.add(ex.name.trim());
+			if (ex.type === 'exercise' && ex.name && ex.name.trim()) {
+				names.add(ex.name.trim());
+			}
 		});
 	});
+	
 	const current = select.value || '__all';
 	select.innerHTML = '';
+	
 	const allOpt = create('option', { value: '__all', textContent: 'All exercises' });
 	select.appendChild(allOpt);
+	
 	Array.from(names).sort().forEach(n => {
 		const o = create('option', { value: n, textContent: n });
 		select.appendChild(o);
 	});
+	
 	select.value = Array.from(select.querySelectorAll('option')).some(o => o.value === current) ? current : '__all';
 }
 
-// ---------- Progress charting (Updated for multiple charts) ----------
+// ==========================================================================
+//  Progress Charting (Chart.js)
+// ==========================================================================
+
+/**
+ * Gets theme-appropriate colors for chart rendering.
+ * @returns {object} An object with {grid, tick, legend} color strings.
+ */
 function chartColors() {
-	// Re-check appearance setting every time we draw
 	let appearance = App.settings.appearance;
 	if (appearance === 'system') {
 		appearance = MQL_DARK.matches ? 'dark' : 'light';
 	}
-	return appearance === 'dark' ? { grid: '#555', tick: '#ccc', legend: '#ddd' } : { grid: '#ddd', tick: '#333', legend: '#111' };
+	return appearance === 'dark' 
+		? { grid: '#334155', tick: '#cbd5e1', legend: '#e5e7eb' } 
+		: { grid: '#ddd', tick: '#333', legend: '#111' };
 }
 
+/**
+ * Processes workout history into data arrays for charting.
+ * @param {string} selected - The selected exercise name, or '__all'.
+ * @returns {object} An object with {labels, difficultyData, weightData, ...} arrays.
+ */
 function buildProgressData(selected) {
 	let labels = [], difficultyData = [], weightData = [], durationData = [], breakData = [];
 
 	if (selected === '__all') {
+		// Data for "All exercises"
 		labels = App.workouts.map(w => w.date);
 		difficultyData = App.workouts.map(w => {
 			const exs = (w.exercises || []).filter(e => e.type !== 'break');
@@ -959,12 +1172,16 @@ function buildProgressData(selected) {
 			return (w.exercises || []).filter(e => e.type === 'break').reduce((sum, br) => sum + (parseInt(br.time || br.duration || 0, 10) || 0), 0);
 		});
 	} else {
+		// Data for a specific exercise
 		App.workouts.forEach(w => {
 			const matches = (w.exercises || []).filter(ex => ex.type !== 'break' && ex.name && ex.name.trim() === selected);
 			if (!matches.length) return;
+			
 			labels.push(w.date);
+			
 			const avgDiff = matches.reduce((s, ex) => s + (parseFloat(ex.difficulty || 0) || 0), 0) / matches.length;
 			difficultyData.push(avgDiff);
+			
 			const totalVolume = matches.reduce((s, ex) => {
 				const weightsArr = Array.isArray(ex.weights) ? ex.weights : [ex.weights];
 				const reps = parseInt(ex.reps || 1, 10) || 1;
@@ -972,9 +1189,11 @@ function buildProgressData(selected) {
 				return s + volume;
 			}, 0);
 			weightData.push(totalVolume);
+			
 			const duration = matches.reduce((s, ex) => s + (parseInt(ex.time || 0, 10) || 0), 0);
 			durationData.push(duration);
-			let afters = [];
+			
+			let afters = []; // Breaks *after* this exercise
 			const exs = w.exercises || [];
 			for (let i = 0; i < exs.length; i++) {
 				if (exs[i].type === 'exercise' && exs[i].name && exs[i].name.trim() === selected && exs[i + 1] && exs[i + 1].type === 'break') {
@@ -995,13 +1214,23 @@ function buildProgressData(selected) {
 	return { labels, difficultyData, weightData, durationData, breakData };
 }
 
+/**
+ * Creates a new chart or updates an existing one.
+ * @param {string} chartId - The canvas element ID.
+ * @param {string} type - The key for App.charts (e.g., 'difficulty').
+ * @param {Array<string>} labels - The X-axis labels.
+ * @param {Array<number>} data - The Y-axis data points.
+ * @param {string} datasetLabel - The label for the dataset.
+ */
 function createOrUpdateChart(chartId, type, labels, data, datasetLabel) {
 	const canvas = $(chartId);
 	if (!canvas) return;
-	// Check if the canvas is rendered
+	
+	// Don't try to render a chart on a hidden canvas
 	if (canvas.offsetParent === null) {
-		return; // Don't try to render a chart on a hidden canvas
+		return;
 	}
+	
 	const colors = chartColors();
 	const cfg = {
 		type: 'line',
@@ -1018,16 +1247,35 @@ function createOrUpdateChart(chartId, type, labels, data, datasetLabel) {
 			}]
 		},
 		options: {
-			responsive: true, maintainAspectRatio: true,
-			scales: { x: { display: false, grid: { drawTicks: false, drawBorder: false } }, y: { grid: { color: colors.grid }, ticks: { color: colors.tick } } },
-			plugins: { legend: { labels: { color: colors.legend } }, tooltip: { callbacks: { title: (ctx) => labels[ctx[0].dataIndex] } } }
+			responsive: true, 
+			maintainAspectRatio: true,
+			scales: { 
+				x: { display: false, grid: { drawTicks: false, drawBorder: false } }, 
+				y: { grid: { color: colors.grid }, ticks: { color: colors.tick } } 
+			},
+			plugins: { 
+				legend: { labels: { color: colors.legend } }, 
+				tooltip: { callbacks: { title: (ctx) => labels[ctx[0].dataIndex] } } 
+			}
 		}
 	};
-	if (type === 'weight') { cfg.data.datasets[0].borderColor = 'rgb(34,197,94)'; cfg.data.datasets[0].backgroundColor = 'rgba(34,197,94,0.1)'; }
-	else if (type === 'duration') { cfg.data.datasets[0].borderColor = 'rgb(255,165,0)'; cfg.data.datasets[0].backgroundColor = 'rgba(255,165,0,0.1)'; }
-	else if (type === 'break') { cfg.data.datasets[0].borderColor = 'rgb(255,44,44)'; cfg.data.datasets[0].backgroundColor = 'rgba(255,44,44,0.1)'; }
-	else { cfg.options.scales.y.suggestedMin = 0; cfg.options.scales.y.suggestedMax = 10; }
+	
+	// Apply specific colors/options
+	if (type === 'weight') { 
+		cfg.data.datasets[0].borderColor = 'rgb(34,197,94)'; 
+		cfg.data.datasets[0].backgroundColor = 'rgba(34,197,94,0.1)'; 
+	} else if (type === 'duration') { 
+		cfg.data.datasets[0].borderColor = 'rgb(255,165,0)'; 
+		cfg.data.datasets[0].backgroundColor = 'rgba(255,165,0,0.1)'; 
+	} else if (type === 'break') { 
+		cfg.data.datasets[0].borderColor = 'rgb(255,44,44)'; 
+		cfg.data.datasets[0].backgroundColor = 'rgba(255,44,44,0.1)'; 
+	} else { // difficulty
+		cfg.options.scales.y.suggestedMin = 0; 
+		cfg.options.scales.y.suggestedMax = 10; 
+	}
 
+	// Update existing chart or create new one
 	if (App.charts[type]) {
 		App.charts[type].config.type = cfg.type;
 		App.charts[type].config.data = cfg.data;
@@ -1038,6 +1286,7 @@ function createOrUpdateChart(chartId, type, labels, data, datasetLabel) {
 	}
 }
 
+/** Destroys all Chart.js instances. */
 function destroyCharts() {
 	Object.keys(App.charts).forEach(key => {
 		if (App.charts[key]) {
@@ -1047,6 +1296,7 @@ function destroyCharts() {
 	});
 }
 
+/** Renders all progress charts. */
 function renderProgress() {
 	// Destroy existing charts to prevent rendering issues
 	destroyCharts();
@@ -1074,10 +1324,13 @@ function renderProgress() {
 	);
 }
 
+/** Attaches a ResizeObserver to charts to handle resizing. */
 function attachPanelResizeObserver() {
 	const canvases = ['difficultyChart', 'weightChart', 'durationChart', 'breakChart'].map(id => $(id)).filter(c => c);
 	if (!canvases.length) return;
+	
 	if (App.panelResizeObserver) App.panelResizeObserver.disconnect();
+	
 	App.panelResizeObserver = new ResizeObserver(() => {
 		Object.values(App.charts).forEach(chart => {
 			if (chart) {
@@ -1085,218 +1338,253 @@ function attachPanelResizeObserver() {
 			}
 		});
 	});
+	
 	canvases.forEach(canvas => App.panelResizeObserver.observe(canvas));
 }
 
-// ---------- CSV Export / Import (Full fidelity) ----------
+// ==========================================================================
+//  CSV Export / Import
+// ==========================================================================
+
 function exportWorkoutsToCSV() {
-  if (!App.workouts.length) {
-    showModal('No history to export.');
-    return;
-  }
+	if (!App.workouts.length) {
+		showModal('No history to export.');
+		return;
+	}
 
-  // Each row = one exercise/break from one workout
-  const header = [
-    'WorkoutIndex',
-    'Date',
-    'Type',
-    'Name',
-    'Reps',
-    'Weights',
-    'Unit',
-    'Difficulty',
-    'Dropset',
-    'Duration',
-    'Time',
-    'TotalTime'
-  ];
+	// Each row = one exercise/break from one workout
+	const header = [
+		'WorkoutIndex', 'Date', 'TotalTime',
+		'Type', 'Name', 'Reps', 'Weights', 'Unit', 
+		'Difficulty', 'Dropset', 'Duration', 'Time'
+	];
 
-  const rows = [];
+	const rows = [];
 
-  App.workouts.forEach((w, wi) => {
-    (w.exercises || []).forEach(ex => {
-      rows.push([
-        wi,
-        `"${w.date}"`,
-        ex.type || '',
-        `"${ex.name || ''}"`,
-        ex.reps ?? '',
-        `"${(Array.isArray(ex.weights) ? ex.weights.join('|') : (ex.weights ?? ''))}"`,
-        ex.unit || '',
-        ex.difficulty ?? '',
-        ex.dropset ? '1' : '0',
-        ex.duration ?? '',
-        ex.time ?? '',
-        w.totalTime ?? ''
-      ]);
-    });
-  });
+	App.workouts.forEach((w, wi) => {
+		(w.exercises || []).forEach(ex => {
+			rows.push([
+				wi,
+				`"${w.date}"`,
+				w.totalTime ?? '',
+				ex.type || '',
+				`"${ex.name || ''}"`,
+				ex.reps ?? '',
+				`"${(Array.isArray(ex.weights) ? ex.weights.join('|') : (ex.weights ?? ''))}"`,
+				ex.unit || '',
+				ex.difficulty ?? '',
+				ex.dropset ? '1' : '0',
+				ex.duration ?? '', // Planned break duration
+				ex.time ?? ''       // Actual time spent
+			]);
+		});
+	});
 
-  const csv = [header.join(','), ...rows.map(r => r.join(','))].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = 'workout_history.csv';
-  link.click();
-  URL.revokeObjectURL(link.href);
+	const csv = [header.join(','), ...rows.map(r => r.join(','))].join('\n');
+	const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+	const link = document.createElement('a');
+	link.href = URL.createObjectURL(blob);
+	link.download = 'workout_history.csv';
+	link.click();
+	URL.revokeObjectURL(link.href);
 }
 
 function importWorkoutsFromCSV(file) {
-  const reader = new FileReader();
-  reader.onload = e => {
-    const text = e.target.result;
-    const lines = text.split(/\r?\n/).filter(l => l.trim());
-    if (lines.length <= 1) {
-      showModal('No valid CSV data found.');
-      return;
-    }
+	const reader = new FileReader();
+	reader.onload = e => {
+		const text = e.target.result;
+		const lines = text.split(/\r?\n/).filter(l => l.trim());
+		if (lines.length <= 1) {
+			showModal('No valid CSV data found.');
+			return;
+		}
 
-    const [headerLine, ...rows] = lines;
-    const headers = headerLine.split(',');
+		const [headerLine, ...rows] = lines;
+		// Simple header detection
+		const headers = headerLine.split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
+		
+		// Find column indices
+		const idx = {
+			wi: headers.indexOf('workoutindex'),
+			date: headers.indexOf('date'),
+			totalTime: headers.indexOf('totaltime'),
+			type: headers.indexOf('type'),
+			name: headers.indexOf('name'),
+			reps: headers.indexOf('reps'),
+			weights: headers.indexOf('weights'),
+			unit: headers.indexOf('unit'),
+			diff: headers.indexOf('difficulty'),
+			dropset: headers.indexOf('dropset'),
+			duration: headers.indexOf('duration'),
+			time: headers.indexOf('time')
+		};
 
-    // Rebuild workouts as stored in localStorage
-    const workouts = [];
-    rows.forEach(line => {
-      const cols = line.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
-      if (cols.length < 12) return;
+		// Check for essential columns
+		if (idx.wi < 0 || idx.type < 0) {
+			showModal('Invalid CSV format. Missing WorkoutIndex or Type columns.');
+			return;
+		}
+		
+		// Rebuild workouts as stored in localStorage
+		const workouts = [];
+		rows.forEach(line => {
+			// Regex to split CSV, handling quotes
+			const cols = line.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
+			if (cols.length < headers.length) return;
 
-      const [
-        wi, date, type, name, reps, weights, unit, diff, dropset, duration, time, totalTime
-      ] = cols;
+			const workoutIndex = parseInt(cols[idx.wi], 10) || 0;
+			
+			if (!workouts[workoutIndex]) {
+				workouts[workoutIndex] = { 
+					date: cols[idx.date], 
+					exercises: [], 
+					totalTime: parseInt(cols[idx.totalTime]) || 0 
+				};
+			}
 
-      const workoutIndex = parseInt(wi, 10) || 0;
-      if (!workouts[workoutIndex]) {
-        workouts[workoutIndex] = { date, exercises: [], totalTime: parseInt(totalTime) || 0 };
-      }
+			workouts[workoutIndex].exercises.push({
+				type: cols[idx.type],
+				name: cols[idx.name],
+				reps: parseInt(cols[idx.reps]) || 0,
+				weights: cols[idx.weights] ? cols[idx.weights].split('|').map(w => parseFloat(w) || 0) : [],
+				unit: cols[idx.unit],
+				difficulty: parseInt(cols[idx.diff]) || 0,
+				dropset: cols[idx.dropset] === '1',
+				duration: parseInt(cols[idx.duration]) || 0,
+				time: parseInt(cols[idx.time]) || 0
+			});
+		});
 
-      workouts[workoutIndex].exercises.push({
-        type,
-        name,
-        reps: parseInt(reps) || 0,
-        weights: weights ? weights.split('|').map(w => parseFloat(w) || 0) : [],
-        unit,
-        difficulty: parseInt(diff) || 0,
-        dropset: dropset === '1',
-        duration: parseInt(duration) || 0,
-        time: parseInt(time) || 0
-      });
-    });
+		const imported = workouts.filter(Boolean); // Remove empty/sparse entries
 
-    const imported = workouts.filter(Boolean);
-
-    showModal(
-      'Importing will overwrite your current workout history. Continue?',
-      () => {
-        App.workouts = imported;
-        saveWorkouts();
-        renderHistory();
-        updateExerciseSelector();
-        renderProgress();
-        showModal('Import complete.');
-      },
-      () => {} // cancel
-    );
-  };
-  reader.readAsText(file);
+		showModal(
+			`Found ${imported.length} workouts. Importing will overwrite your current history. Continue?`,
+			() => {
+				App.workouts = imported;
+				saveWorkouts();
+				renderHistory();
+				updateExerciseSelector();
+				renderProgress();
+				showModal('Import complete.');
+			},
+			() => {
+				// User cancelled
+			}
+		);
+	};
+	reader.readAsText(file);
 }
 
-$('exportCSVBtn').addEventListener('click', exportWorkoutsToCSV);
-$('importCSVBtn').addEventListener('click', () => $('importFileInput').click());
-$('importFileInput').addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (file) importWorkoutsFromCSV(file);
-  e.target.value = '';
-});
+// ==========================================================================
+//  Initialization & Event Listeners
+// ==========================================================================
 
-// ---------- Init & wiring ----------
 document.addEventListener('DOMContentLoaded', () => {
-	// Apply theme *before* anything else
+	
+	// --- 1. Apply theme immediately ---
 	applyAppearance();
 
-	// settings panel - load current values and auto-save on change
+	// --- 2. Wire up Settings Panel ---
 	$('defaultUnit').value = App.settings.defaultUnit || 'kg';
 	$('appearance').value = App.settings.appearance || 'light';
 	
 	$('defaultUnit').addEventListener('change', () => {
 		App.settings.defaultUnit = $('defaultUnit').value;
 		saveSettings();
-		renderProgress();
+		renderProgress(); // Redraw charts with new unit label
 	});
 	
 	$('appearance').addEventListener('change', () => {
 		App.settings.appearance = $('appearance').value;
 		saveSettings();
-		applyAppearance(); // This will apply 'system' logic
+		applyAppearance();
 		renderProgress(); // Re-render charts for new theme
 	});
 
-	// Add listener for system theme changes
+	// Listen for system theme changes
 	MQL_DARK.addEventListener('change', () => {
 		if (App.settings.appearance === 'system') {
 			applyAppearance();
-			renderProgress(); // Re-render charts if theme changes
+			renderProgress();
 		}
 	});
+	
+	// Import/Export buttons
+	$('exportCSVBtn').addEventListener('click', exportWorkoutsToCSV);
+	$('importCSVBtn').addEventListener('click', () => $('importFileInput').click());
+	$('importFileInput').addEventListener('change', e => {
+		const file = e.target.files[0];
+		if (file) importWorkoutsFromCSV(file);
+		e.target.value = ''; // Reset input
+	});
 
-	// main buttons
+	// --- 3. Wire up Main Planning Buttons ---
 	$('addExerciseBtn').addEventListener('click', () => addExercise());
 	$('addBreakBtn').addEventListener('click', () => addBreak());
 	$('saveWorkoutBtn').addEventListener('click', saveWorkout);
 	$('startWorkoutBtn').addEventListener('click', startWorkout);
 	$('cancelEditBtn').addEventListener('click', cancelEdit);
 
-	// progress filters
+	// --- 4. Wire up Progress Filters ---
 	$('exerciseSelect').addEventListener('change', renderProgress);
 	
-	// modal buttons
+	// --- 5. Wire up Modal Buttons ---
 	$('modalConfirmBtn').addEventListener('click', () => {
 		if (App.modal.onConfirm) {
 			App.modal.onConfirm();
 		}
 		hideModal();
 	});
+	
 	$('modalCancelBtn').addEventListener('click', () => {
 		if (App.modal.onCancel) {
 			App.modal.onCancel();
 		}
 		hideModal();
 	});
+	
+	// Click on overlay to close modal (like a cancel)
 	$('modalOverlay').addEventListener('click', (e) => {
 		if (e.target === $('modalOverlay')) {
+			if (App.modal.onCancel) {
+				App.modal.onCancel();
+			}
 			hideModal();
 		}
 	});
 
-	// initial render
-	renderHistory();
-	updateExerciseSelector();
-	// Don't render progress initially, wait for tab click
-	
-	attachPanelResizeObserver();
-
-	// tabs
+	// --- 6. Wire up Tab Navigation ---
 	const tabButtons = document.querySelectorAll('.tab-btn');
 	const panels = document.querySelectorAll('.main-panel, .progress-panel, .history-panel, .settings-panel');
+	
 	tabButtons.forEach(btn => {
 		btn.addEventListener('click', () => {
+			// Update button active state
 			tabButtons.forEach(b => b.classList.remove('active'));
 			btn.classList.add('active');
+			
+			// Update panel visibility
 			panels.forEach(p => p.classList.remove('active'));
 			const targetPanel = document.querySelector('.' + btn.dataset.target);
-			if (targetPanel) targetPanel.classList.add('active');
+			if (targetPanel) {
+				targetPanel.classList.add('active');
+			}
 			
-			// Re-render progress charts if its tab is selected
+			// Re-render progress charts *only* when its tab is selected
 			if (btn.dataset.target === 'progress-panel') {
-				// Use setTimeout to ensure the panel is visible before rendering
+				// Use setTimeout to ensure the panel is visible *before* rendering
 				setTimeout(() => {
 					renderProgress();
-				}, 50);
+				}, 50); // 50ms delay is usually enough for DOM to update
 			}
 		});
 	});
-	
-	// Manually render history and progress for the first time
-	// Note: Progress charts are now rendered when the tab is clicked.
+
+	// --- 7. Initial Render ---
 	renderHistory();
 	updateExerciseSelector();
+	// Note: Progress charts are now rendered only when the tab is clicked.
+	
+	// --- 8. Attach Observers ---
+	attachPanelResizeObserver();
 });
