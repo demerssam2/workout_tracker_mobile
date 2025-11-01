@@ -103,13 +103,14 @@ h3 {
    ========================================================================== */
 
 .container {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	padding: 12px;
-	padding-top: 140px; /* Default for planning tab (which is active on load) */
-	padding-bottom: 80px; /* Space for NEW bottom nav */
-	transition: padding-top 0.2s ease-out; /* ADDED for smooth tab switching */
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    padding-top: 140px; /* Default for planning tab (which is active on load) */
+    padding-bottom: 80px; /* Space for NEW bottom nav */
+    /* removed padding-top transition so switching tabs doesn't animate vertical position */
+    transition: background 0.2s, color 0.2s;
 }
 
 .main-panel, 
