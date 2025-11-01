@@ -107,7 +107,9 @@ h3 {
 	flex-direction: column;
 	gap: 12px;
 	padding: 12px;
-	padding-top: 80px;
+	padding-top: 140px; /* Default for planning tab (which is active on load) */
+	padding-bottom: 80px; /* Space for NEW bottom nav */
+	transition: padding-top 0.2s ease-out; /* ADDED for smooth tab switching */
 }
 
 .main-panel, 
@@ -132,7 +134,7 @@ h3 {
 
 .main-panel {
 	padding: 0;
-	padding-bottom: 160px;
+	/* padding-bottom: 160px; REMOVED - buttons are now at top */
 	background: transparent;
 	border: none;
 }
@@ -149,30 +151,38 @@ h3 {
 	margin-bottom: 10px;
 }
 
-.bottom-buttons {
+.top-controls-container {
 	position: fixed;
-	bottom: 0;
+	top: 0;
 	left: 0;
 	right: 0;
+	z-index: 998; /* Below nav */
+	display: block; /* Shown by default for main panel, hidden by JS */
+	background: var(--panel);
+	border-bottom: 1px solid var(--border);
+	box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+body.dark .top-controls-container {
+	box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+}
+
+.top-controls {
+	/* This was .bottom-buttons */
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	grid-template-rows: 1fr 1fr;
 	gap: 12px;
 	padding: 12px;
-	background: var(--panel);
-	border-top: 1px solid var(--border);
-	box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
 	z-index: 1000;
 	max-width: 640px;
 	margin: 0 auto;
 	box-sizing: border-box;
+	/* Removed fixed positioning, border-top, and box-shadow */
 }
 
-body.dark .bottom-buttons {
-	box-shadow: 0 -2px 10px rgba(0,0,0,0.4);
-}
-
-.bottom-buttons button {
+.top-controls button {
+	/* This was .bottom-buttons button */
 	width: 100%;
 	margin: 0;
 	min-width: 0;
@@ -261,26 +271,28 @@ button:hover, button:focus {
 }
 
 /* ==========================================================================
-   5. Top Tab Navigation
+   5. Bottom Tab Navigation
    ========================================================================== */
 
-.top-tabs {
+.bottom-nav {
+	/* This was .top-tabs */
 	display: flex;
 	justify-content: space-around;
 	align-items: center;
 	background: var(--panel);
-	border-bottom: 1px solid var(--border);
+	border-top: 1px solid var(--border); /* Changed from border-bottom */
 	position: fixed;
-	top: 0;
+	bottom: 0; /* Changed from top: 0 */
 	left: 0;
 	right: 0;
 	z-index: 999;
-	box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+	box-shadow: 0 -2px 4px rgba(0,0,0,0.05); /* Changed from 0 2px */
 }
 
-body.dark .top-tabs {
+body.dark .bottom-nav {
+	/* This was body.dark .top-tabs */
 	background: #23272f; /* Reverted */
-	box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+	box-shadow: 0 -2px 4px rgba(0,0,0,0.4); /* Changed from 0 2px */
 }
 
 .tab-btn {
@@ -300,15 +312,13 @@ body.dark .top-tabs {
 	opacity: 0.8;
 	cursor: pointer;
 	border-bottom: 3px solid transparent;
-	border-top: 1px solid transparent;
-	border-left: 1px solid transparent;
-	border-right: 1px solid transparent;
+	border-top: 3px solid transparent; /* Added for symmetry */
 	transition: all 0.18s;
 }
 
 body.dark .tab-btn {
-	color: #00ff00; /* Reverted to original */
-	opacity: 1; /* Original didn't have opacity */
+	color: var(--fg); /* FIXED - Was #00ff00 */
+	opacity: 0.8; /* ADDED - To match light mode */
 }
 
 .tab-btn svg {
@@ -320,35 +330,29 @@ body.dark .tab-btn {
 }
 
 body.dark .tab-btn svg {
-	stroke: #9ca3af; /* Reverted */
-	opacity: 1;
+	stroke: var(--fg); /* FIXED - Was #9ca3af */
+	opacity: 0.7;
 }
 
 .tab-btn span {
 	line-height: 1;
 }
 
-/* === ACTIVE TAB FIX === */
+/* === ACTIVE TAB STYLE (NEW) === */
 .tab-btn.active {
 	color: var(--btn-save);
 	border-bottom: 3px solid var(--btn-save);
-	/* Set outline to BLUE, not gray */
-	border-top: 1px solid var(--btn-save);
-	border-left: 1px solid var(--btn-save);
-	border-right: 1px solid var(--btn-save);
+	border-top: 3px solid transparent; /* Keep top transparent */
 	opacity: 1;
-	background: none; /* Explicitly remove background */
+	background: var(--muted); /* ADDED - subtle background */
 }
 
 body.dark .tab-btn.active {
 	color: #60a5fa;
 	border-bottom-color: #60a5fa;
-	/* Set outline to BLUE, not gray */
-	border-top-color: #60a5fa;
-	border-left-color: #60a5fa;
-	border-right-color: #60a5fa;
+	border-top-color: transparent; /* Keep top transparent */
 	opacity: 1;
-	background: none;
+	background: var(--muted); /* ADDED - subtle background */
 }
 
 .tab-btn.active svg {

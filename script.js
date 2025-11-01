@@ -515,7 +515,7 @@ function stopRowTimer(index) {
 /** Starts the global workout timer. */
 function startWorkoutTimer() {
 	const display = $('workoutTotalTimer');
-	App.workoutSeconds = 0;
+	// App.workoutSeconds = 0; // --- REMOVED --- This allows resuming
 	if (App.workoutTimerId) clearInterval(App.workoutTimerId);
 	
 	App.workoutTimerId = setInterval(() => {
@@ -718,17 +718,42 @@ function completeRow(card) {
 		}
 	} else {
 		// This was the last row, end the workout
-		endWorkout();
+		pauseWorkout(); // <-- PAUSE instead of hard stop
+		
 		const btn = $('startWorkoutBtn');
-		btn.textContent = 'Start';
+		btn.textContent = 'Start'; // Reset button to 'Start'
 		btn.dataset.active = 'false';
 		btn.classList.remove('end');
-		document.body.classList.remove('show-workout');
+		// document.body.classList.remove('show-workout'); // Don't remove this, user might want to save
 	}
 }
 
+/** Pauses the global timer and all active row/break timers. */
+function pauseWorkout() {
+	// Stop all row timers (pauses them)
+	App.rowTimers.forEach((id, i) => {
+		if (id) {
+			clearInterval(id);
+			App.rowTimers[i] = null;
+		}
+	});
+	// By NOT calling stopRowTimer(), App.activeRowIndex is preserved.
+	
+	App.workoutStarted = false; // Set state to "not running"
+	stopWorkoutTimer(); // Pauses global timer
+
+	// Find any active break countdowns and "pause" them
+	const cards = Array.from($('workoutListContainer').children);
+	cards.forEach(card => {
+		if (card.classList.contains('break-card') && card._countdown && !card.classList.contains('break-done')) {
+			clearInterval(card._countdown);
+			card._countdown = 'paused'; // Use a string flag to indicate it's pausable
+		}
+	});
+}
+
 /**
- * Toggles the workout state (Start or End).
+ * Toggles the workout state (Start, Pause, Resume).
  */
 function startWorkout() {
 	const btn = $('startWorkoutBtn');
@@ -736,55 +761,71 @@ function startWorkout() {
 	const cards = Array.from(container.children);
 
 	if (btn.dataset.active === 'true') {
-		// --- ENDING WORKOUT ---
-		showModal('Are you sure you want to end this workout?', 
-			() => {
-				endWorkout();
-				btn.textContent = 'Start';
-				btn.dataset.active = 'false';
-				btn.classList.remove('end');
-				document.body.classList.remove('show-workout');
-			},
-			() => {
-				// Do nothing, user cancelled
-			}
-		);
+		// --- PAUSING WORKOUT ---
+		// MODAL REMOVED
+		pauseWorkout();
+		btn.textContent = 'Resume'; // Change text to "Resume"
+		btn.dataset.active = 'false';
+		btn.classList.remove('end');
+		// document.body.classList.remove('show-workout'); // Keep UI active
 		return;
 	}
 
-	// --- STARTING WORKOUT ---
+	// --- STARTING / RESUMING WORKOUT ---
 	if (!cards.length) {
 		showModal('Add at least one exercise first.');
 		return;
 	}
 
-	document.body.classList.add('show-workout');
+	// Check if it's a fresh start or a resume
+	const isFreshStart = !App.workoutStarted && App.workoutSeconds === 0;
 
-	// Add "Done" buttons and timers to all cards
-	cards.forEach(card => {
-		ensureTimeCell(card); // Ensure time cell exists FIRST
-		createDoneButton(card);
-		const rail = card.querySelector('.card-action-rail');
-		if (rail) rail.classList.add('workout-active');
-	});
+	if (isFreshStart) {
+		// --- FRESH START ---
+		document.body.classList.add('show-workout');
+		// Add "Done" buttons and timers to all cards
+		cards.forEach(card => {
+			ensureTimeCell(card); // Ensure time cell exists FIRST
+			createDoneButton(card);
+			const rail = card.querySelector('.card-action-rail');
+			if (rail) rail.classList.add('workout-active');
+		});
 
+		// Start the first card
+		startRowTimer(0);
+		const first = cards[0];
+		if (first && first.classList.contains('break-card')) {
+			const inp = first.querySelector('.break-body input[type="number"]');
+			if (inp) first.dataset.plannedDuration = parseInt(inp.value || 0, 10) || 0;
+			first._timeLeft = parseInt(first.dataset.plannedDuration || 0, 10) || 0;
+			first._elapsed = 0;
+			startBreakCountdown(first);
+		}
+		
+		$('workoutTotalTimer').style.display = 'block';
+		$('workoutTotalTimer').textContent = 'Total Time: 00:00';
+		App.workoutSeconds = 0; // <-- Explicitly reset here
+	
+	} else {
+		// --- RESUMING ---
+		// Resume the active row timer
+		if (App.activeRowIndex !== null) {
+			startRowTimer(App.activeRowIndex);
+		}
+		// Resume any active break countdowns
+		cards.forEach(card => {
+			if (card.classList.contains('break-card') && card._countdown === 'paused') {
+				card._countdown = null; // Clear the 'paused' flag
+				startBreakCountdown(card); // This function will pick up where it left off
+			}
+		});
+	}
+
+	// This runs for both Fresh Start and Resume
 	btn.textContent = 'End';
 	btn.dataset.active = 'true';
 	btn.classList.add('end');
-	$('workoutTotalTimer').style.display = 'block';
-	$('workoutTotalTimer').textContent = 'Total Time: 00:00';
 	App.workoutStarted = true;
-
-	// Start the first card
-	startRowTimer(0);
-	const first = cards[0];
-	if (first && first.classList.contains('break-card')) {
-		first.dataset.plannedDuration = parseInt(first.dataset.plannedDuration || 0, 10) || 0;
-		first._timeLeft = parseInt(first.dataset.plannedDuration || 0, 10) || 0;
-		first._elapsed = 0;
-		startBreakCountdown(first);
-	}
-
 	startWorkoutTimer();
 }
 
@@ -1556,19 +1597,33 @@ document.addEventListener('DOMContentLoaded', () => {
 	// --- 6. Wire up Tab Navigation ---
 	const tabButtons = document.querySelectorAll('.tab-btn');
 	const panels = document.querySelectorAll('.main-panel, .progress-panel, .history-panel, .settings-panel');
+	const mainContainer = document.querySelector('.container'); // Get container once
 	
 	tabButtons.forEach(btn => {
 		btn.addEventListener('click', () => {
 			// Update button active state
 			tabButtons.forEach(b => b.classList.remove('active'));
 			btn.classList.add('active');
-			
+
 			// Update panel visibility
 			panels.forEach(p => p.classList.remove('active'));
 			const targetPanel = document.querySelector('.' + btn.dataset.target);
 			if (targetPanel) {
 				targetPanel.classList.add('active');
 			}
+			
+			// === MODIFIED LOGIC HERE ===
+			// Show/Hide top controls AND adjust padding
+			const topControls = document.querySelector('.top-controls-container');
+			
+			if (btn.dataset.target === 'main-panel') {
+				if (topControls) topControls.style.display = 'block';
+				if (mainContainer) mainContainer.style.paddingTop = '140px';
+			} else {
+				if (topControls) topControls.style.display = 'none';
+				if (mainContainer) mainContainer.style.paddingTop = '20px'; // Set smaller padding
+			}
+			// === END OF MODIFIED LOGIC ===
 			
 			// Re-render progress charts *only* when its tab is selected
 			if (btn.dataset.target === 'progress-panel') {
