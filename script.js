@@ -706,15 +706,20 @@ function completeRow(card) {
 	// --- Auto-advance to the next row ---
 	if (idx + 1 < cards.length) {
 		const next = cards[idx + 1];
-		startRowTimer(idx + 1); // Start next row's stopwatch
-		
-		// If next card is a break, start its countdown
-		if (next.classList.contains('break-card')) {
-			const inp = next.querySelector('.break-body input[type="number"]');
-			if (inp) next.dataset.plannedDuration = parseInt(inp.value || 0, 10) || 0;
-			next._timeLeft = parseInt(next.dataset.plannedDuration || 0, 10) || 0;
-			next._elapsed = 0;
-			startBreakCountdown(next);
+		if(App.workoutStarted){
+			startRowTimer(idx + 1); // Start next row's stopwatch
+			
+			// If next card is a break, start its countdown
+			if (next.classList.contains('break-card')) {
+				const inp = next.querySelector('.break-body input[type="number"]');
+				if (inp) next.dataset.plannedDuration = parseInt(inp.value || 0, 10) || 0;
+				next._timeLeft = parseInt(next.dataset.plannedDuration || 0, 10) || 0;
+				next._elapsed = 0;
+				startBreakCountdown(next);
+			}
+		}
+		else{
+			App.activeRowIndex = idx + 1;
 		}
 	} else {
 		// This was the last row, end the workout
