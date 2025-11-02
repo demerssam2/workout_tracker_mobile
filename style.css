@@ -314,7 +314,6 @@ body.dark .bottom-nav {
 	cursor: pointer;
 	border-bottom: 3px solid transparent;
 	border-top: 3px solid transparent; /* Added for symmetry */
-	transition: all 0.18s;
 }
 
 body.dark .tab-btn {
@@ -327,7 +326,6 @@ body.dark .tab-btn {
 	height: 24px;
 	stroke: var(--fg);
 	opacity: 0.7;
-	transition: all 0.18s;
 }
 
 body.dark .tab-btn svg {
