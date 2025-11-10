@@ -1393,132 +1393,143 @@ function attachPanelResizeObserver() {
 // ==========================================================================
 
 function exportWorkoutsToCSV() {
-	if (!App.workouts.length) {
-		showModal('No history to export.');
-		return;
-	}
+    if (!App.workouts.length) {
+        showModal('No history to export.');
+        return null;
+    }
 
-	// Each row = one exercise/break from one workout
-	const header = [
-		'WorkoutIndex', 'Date', 'TotalTime',
-		'Type', 'Name', 'Reps', 'Weights', 'Unit', 
-		'Difficulty', 'Dropset', 'Duration', 'Time'
-	];
+    // Each row = one exercise/break from one workout
+    const header = [
+        'WorkoutIndex', 'Date', 'TotalTime',
+        'Type', 'Name', 'Reps', 'Weights', 'Unit', 
+        'Difficulty', 'Dropset', 'Duration', 'Time'
+    ];
 
-	const rows = [];
+    const rows = [];
 
-	App.workouts.forEach((w, wi) => {
-		(w.exercises || []).forEach(ex => {
-			rows.push([
-				wi,
-				`"${w.date}"`,
-				w.totalTime ?? '',
-				ex.type || '',
-				`"${ex.name || ''}"`,
-				ex.reps ?? '',
-				`"${(Array.isArray(ex.weights) ? ex.weights.join('|') : (ex.weights ?? ''))}"`,
-				ex.unit || '',
-				ex.difficulty ?? '',
-				ex.dropset ? '1' : '0',
-				ex.duration ?? '', // Planned break duration
-				ex.time ?? ''       // Actual time spent
-			]);
-		});
-	});
+    App.workouts.forEach((w, wi) => {
+        (w.exercises || []).forEach(ex => {
+            rows.push([
+                wi,
+                `"${w.date}"`,
+                w.totalTime ?? '',
+                ex.type || '',
+                `"${ex.name || ''}"`,
+                ex.reps ?? '',
+                `"${(Array.isArray(ex.weights) ? ex.weights.join('|') : (ex.weights ?? ''))}"`,
+                ex.unit || '',
+                ex.difficulty ?? '',
+                ex.dropset ? '1' : '0',
+                ex.duration ?? '',
+                ex.time ?? ''
+            ]);
+        });
+    });
 
-	const csv = [header.join(','), ...rows.map(r => r.join(','))].join('\n');
-	const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-	const link = document.createElement('a');
-	link.href = URL.createObjectURL(blob);
-	link.download = 'workout_history.csv';
-	link.click();
-	URL.revokeObjectURL(link.href);
+    const csv = [header.join(','), ...rows.map(r => r.join(','))].join('\n');
+    return csv; // Just return the CSV string
+}
+
+// Helper function for downloading CSV locally
+function downloadCSV(csv) {
+    if (!csv) return;
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'workout_history.csv';
+    link.click();
+    URL.revokeObjectURL(link.href);
 }
 
 function importWorkoutsFromCSV(file) {
-	const reader = new FileReader();
-	reader.onload = e => {
-		const text = e.target.result;
-		const lines = text.split(/\r?\n/).filter(l => l.trim());
-		if (lines.length <= 1) {
-			showModal('No valid CSV data found.');
-			return;
-		}
+    if (!file) {
+        showModal('No file provided.');
+        return;
+    }
 
-		const [headerLine, ...rows] = lines;
-		// Simple header detection
-		const headers = headerLine.split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
-		
-		// Find column indices
-		const idx = {
-			wi: headers.indexOf('workoutindex'),
-			date: headers.indexOf('date'),
-			totalTime: headers.indexOf('totaltime'),
-			type: headers.indexOf('type'),
-			name: headers.indexOf('name'),
-			reps: headers.indexOf('reps'),
-			weights: headers.indexOf('weights'),
-			unit: headers.indexOf('unit'),
-			diff: headers.indexOf('difficulty'),
-			dropset: headers.indexOf('dropset'),
-			duration: headers.indexOf('duration'),
-			time: headers.indexOf('time')
-		};
+    const reader = new FileReader();
+    reader.onload = e => {
+        const text = e.target.result;
+        const lines = text.split(/\r?\n/).filter(l => l.trim());
+        if (lines.length <= 1) {
+            showModal('No valid CSV data found.');
+            return;
+        }
 
-		// Check for essential columns
-		if (idx.wi < 0 || idx.type < 0) {
-			showModal('Invalid CSV format. Missing WorkoutIndex or Type columns.');
-			return;
-		}
-		
-		// Rebuild workouts as stored in localStorage
-		const workouts = [];
-		rows.forEach(line => {
-			// Regex to split CSV, handling quotes
-			const cols = line.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
-			if (cols.length < headers.length) return;
+        const [headerLine, ...rows] = lines;
+        // Simple header detection
+        const headers = headerLine.split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
+        
+        // Find column indices
+        const idx = {
+            wi: headers.indexOf('workoutindex'),
+            date: headers.indexOf('date'),
+            totalTime: headers.indexOf('totaltime'),
+            type: headers.indexOf('type'),
+            name: headers.indexOf('name'),
+            reps: headers.indexOf('reps'),
+            weights: headers.indexOf('weights'),
+            unit: headers.indexOf('unit'),
+            diff: headers.indexOf('difficulty'),
+            dropset: headers.indexOf('dropset'),
+            duration: headers.indexOf('duration'),
+            time: headers.indexOf('time')
+        };
 
-			const workoutIndex = parseInt(cols[idx.wi], 10) || 0;
-			
-			if (!workouts[workoutIndex]) {
-				workouts[workoutIndex] = { 
-					date: cols[idx.date], 
-					exercises: [], 
-					totalTime: parseInt(cols[idx.totalTime]) || 0 
-				};
-			}
+        // Check for essential columns
+        if (idx.wi < 0 || idx.type < 0) {
+            showModal('Invalid CSV format. Missing WorkoutIndex or Type columns.');
+            return;
+        }
+        
+        // Rebuild workouts as stored in localStorage
+        const workouts = [];
+        rows.forEach(line => {
+            // Regex to split CSV, handling quotes
+            const cols = line.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
+            if (cols.length < headers.length) return;
 
-			workouts[workoutIndex].exercises.push({
-				type: cols[idx.type],
-				name: cols[idx.name],
-				reps: parseInt(cols[idx.reps]) || 0,
-				weights: cols[idx.weights] ? cols[idx.weights].split('|').map(w => parseFloat(w) || 0) : [],
-				unit: cols[idx.unit],
-				difficulty: parseInt(cols[idx.diff]) || 0,
-				dropset: cols[idx.dropset] === '1',
-				duration: parseInt(cols[idx.duration]) || 0,
-				time: parseInt(cols[idx.time]) || 0
-			});
-		});
+            const workoutIndex = parseInt(cols[idx.wi], 10) || 0;
+            
+            if (!workouts[workoutIndex]) {
+                workouts[workoutIndex] = { 
+                    date: cols[idx.date], 
+                    exercises: [], 
+                    totalTime: parseInt(cols[idx.totalTime]) || 0 
+                };
+            }
 
-		const imported = workouts.filter(Boolean); // Remove empty/sparse entries
+            workouts[workoutIndex].exercises.push({
+                type: cols[idx.type],
+                name: cols[idx.name],
+                reps: parseInt(cols[idx.reps]) || 0,
+                weights: cols[idx.weights] ? cols[idx.weights].split('|').map(w => parseFloat(w) || 0) : [],
+                unit: cols[idx.unit],
+                difficulty: parseInt(cols[idx.diff]) || 0,
+                dropset: cols[idx.dropset] === '1',
+                duration: parseInt(cols[idx.duration]) || 0,
+                time: parseInt(cols[idx.time]) || 0
+            });
+        });
 
-		showModal(
-			`Found ${imported.length} workouts. Importing will overwrite your current history. Continue?`,
-			() => {
-				App.workouts = imported;
-				saveWorkouts();
-				renderHistory();
-				updateExerciseSelector();
-				renderProgress();
-				showModal('Import complete.');
-			},
-			() => {
-				// User cancelled
-			}
-		);
-	};
-	reader.readAsText(file);
+        const imported = workouts.filter(Boolean); // Remove empty/sparse entries
+
+        showModal(
+            `Found ${imported.length} workouts. Importing will overwrite your current history. Continue?`,
+            () => {
+                App.workouts = imported;
+                saveWorkouts();
+                renderHistory();
+                updateExerciseSelector();
+                renderProgress();
+                showModal('Import complete.');
+            },
+            () => {
+                // User cancelled
+            }
+        );
+    };
+    reader.readAsText(file);
 }
 
 // ==========================================================================
@@ -1663,7 +1674,7 @@ const CLIENT_ID = '669473273169-c1ag0g07cbo023vn5q8jovr86fehm96u.apps.googleuser
 const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
 // Authorization scopes required by the API; multiple scopes can be
 // included, separated by spaces.
-const SCOPES = 'https://www.googleapis.com/auth/drive.metadata.readonly';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 let tokenClient;
 let gapiInited = false;
 let gisInited = false;
@@ -1716,7 +1727,6 @@ function handleAuthClick() {
 		}
 		document.getElementById('signout_button').style.visibility = 'visible';
 		document.getElementById('authorize_button').innerText = 'Refresh';
-		await listFiles();
 	};
 	if (gapi.client.getToken() === null) {
 		// Prompt the user to select a Google Account and ask for consent to share their data
@@ -1740,29 +1750,94 @@ function handleSignoutClick() {
 		document.getElementById('signout_button').style.visibility = 'hidden';
 	}
 }
+
+// ==========================================================================
+//  Google Drive Backup Helpers
+// ==========================================================================
+
+// Folder name where backups will be stored
+const BACKUP_FOLDER_NAME = "WorkoutTrackerBackups";
+
 /**
- * Print metadata for first 10 files.
+ * Ensures the backup folder exists, creates it if missing.
+ * Returns a Promise that resolves with the folder ID.
  */
-async function listFiles() {
-	let response;
-	try {
-	response = await gapi.client.drive.files.list({
-		'pageSize': 10,
-		'fields': 'files(id, name)',
+async function ensureBackupFolder() {
+	const response = await gapi.client.drive.files.list({
+		q: `mimeType='application/vnd.google-apps.folder' and name='${BACKUP_FOLDER_NAME}' and trashed=false`,
+		fields: "files(id, name)",
+		spaces: "drive",
 	});
-	} catch (err) {
-		document.getElementById('content').innerText = err.message;
-		return;
+
+	if (response.result.files && response.result.files.length > 0) {
+		console.log("Backup folder found:", response.result.files[0].id);
+			return response.result.files[0].id;
 	}
-	const files = response.result.files;
-	if (!files || files.length == 0) {
-		document.getElementById('content').innerText = 'No files found.';
-		return;
-	}
-	// Flatten to string to display
-	const output = files.reduce(
-		(str, file) => `${str}${file.name} (${file.id})\n`,
-		'Files:\n'
+
+	// Folder not found → create it
+	const createResponse = await gapi.client.drive.files.create({
+		resource: {
+			name: BACKUP_FOLDER_NAME,
+			mimeType: "application/vnd.google-apps.folder",
+		},
+		fields: "id",
+	});
+
+	console.log("Backup folder created:", createResponse.result.id);
+	return createResponse.result.id;
+}
+
+/**
+ * Uploads a CSV file into the backup folder.
+ * @param {string} csvData - The CSV string to upload.
+ * @param {string} fileName - The name of the file, e.g. 'backup_2025-11-09.csv'.
+ */
+async function uploadCSVToDrive(csvData, fileName) {
+	const folderId = await ensureBackupFolder();
+
+	const fileMetadata = {
+		name: fileName,
+		parents: [folderId],
+	};
+
+	const file = new Blob([csvData], { type: "text/csv" });
+	const form = new FormData();
+	form.append(
+		"metadata",
+		new Blob([JSON.stringify(fileMetadata)], { type: "application/json" })
 	);
-	document.getElementById('content').innerText = output;
+	form.append("file", file);
+
+	const accessToken = gapi.auth.getToken().access_token;
+	const response = await fetch(
+		"https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id",
+		{
+			method: "POST",
+			headers: new Headers({ Authorization: "Bearer " + accessToken }),
+			body: form,
+		}
+	);
+
+	const result = await response.json();
+	console.log("File uploaded:", result);
+	return result.id;
+}
+
+/**
+ * Called when user clicks "Backup to Drive".
+ * Grabs your exported CSV and uploads it.
+ */
+async function handleBackups() {
+	try {
+		const csv = exportWorkoutsToCSV(); // <-- Uses your existing CSV export logic
+		const fileName = `workout_backup_${new Date()
+		.toISOString()
+		.split("T")[0]}.csv`;
+
+		await uploadCSVToDrive(csv, fileName);
+		showModal("Backup successful! Check your Google Drive folder.");
+	} catch (err) {
+		console.error("Backup failed:", err);
+		showModal("Backup failed. Check console for details.");
+	}
 }
