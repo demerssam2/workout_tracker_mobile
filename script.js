@@ -1441,95 +1441,114 @@ function downloadCSV(csv) {
     URL.revokeObjectURL(link.href);
 }
 
-function importWorkoutsFromCSV(file) {
-    if (!file) {
-        showModal('No file provided.');
-        return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = e => {
-        const text = e.target.result;
-        const lines = text.split(/\r?\n/).filter(l => l.trim());
-        if (lines.length <= 1) {
-            showModal('No valid CSV data found.');
-            return;
+function importWorkoutsFromCSV(fileOrData) {
+    // 1. Return a new promise
+    return new Promise((resolve, reject) => {
+        if (!fileOrData) {
+            showModal('No file provided.');
+            return reject(new Error('No file provided.'));
         }
 
-        const [headerLine, ...rows] = lines;
-        // Simple header detection
-        const headers = headerLine.split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
-        
-        // Find column indices
-        const idx = {
-            wi: headers.indexOf('workoutindex'),
-            date: headers.indexOf('date'),
-            totalTime: headers.indexOf('totaltime'),
-            type: headers.indexOf('type'),
-            name: headers.indexOf('name'),
-            reps: headers.indexOf('reps'),
-            weights: headers.indexOf('weights'),
-            unit: headers.indexOf('unit'),
-            diff: headers.indexOf('difficulty'),
-            dropset: headers.indexOf('dropset'),
-            duration: headers.indexOf('duration'),
-            time: headers.indexOf('time')
-        };
+        // 2. Define all parsing logic as a reusable inner function
+        const parse = (text) => {
+            try { // <-- Add try/catch
+                const lines = text.split(/\r?\n/).filter(l => l.trim());
+                if (lines.length <= 1) {
+                    showModal('No valid CSV data found.');
+                    return reject(new Error('No valid CSV data.'));
+                }
 
-        // Check for essential columns
-        if (idx.wi < 0 || idx.type < 0) {
-            showModal('Invalid CSV format. Missing WorkoutIndex or Type columns.');
-            return;
-        }
-        
-        // Rebuild workouts as stored in localStorage
-        const workouts = [];
-        rows.forEach(line => {
-            // Regex to split CSV, handling quotes
-            const cols = line.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
-            if (cols.length < headers.length) return;
-
-            const workoutIndex = parseInt(cols[idx.wi], 10) || 0;
-            
-            if (!workouts[workoutIndex]) {
-                workouts[workoutIndex] = { 
-                    date: cols[idx.date], 
-                    exercises: [], 
-                    totalTime: parseInt(cols[idx.totalTime]) || 0 
+                // [All your existing parsing logic]
+                const [headerLine, ...rows] = lines;
+                const headers = headerLine.split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
+                const idx = {
+                    wi: headers.indexOf('workoutindex'),
+                    date: headers.indexOf('date'),
+                    totalTime: headers.indexOf('totaltime'),
+                    type: headers.indexOf('type'),
+                    name: headers.indexOf('name'),
+                    reps: headers.indexOf('reps'),
+                    weights: headers.indexOf('weights'),
+                    unit: headers.indexOf('unit'),
+                    diff: headers.indexOf('difficulty'),
+                    dropset: headers.indexOf('dropset'),
+                    duration: headers.indexOf('duration'),
+                    time: headers.indexOf('time')
                 };
+                if (idx.wi < 0 || idx.type < 0) {
+                    showModal('Invalid CSV format. Missing WorkoutIndex or Type columns.');
+                    return reject(new Error('Invalid CSV format.'));
+                }
+                const workouts = [];
+                rows.forEach(line => {
+                    const cols = line.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
+                    if (cols.length < headers.length) return;
+                    const workoutIndex = parseInt(cols[idx.wi], 10) || 0;
+                    if (!workouts[workoutIndex]) {
+                        workouts[workoutIndex] = { 
+                            date: cols[idx.date], 
+                            exercises: [], 
+                            totalTime: parseInt(cols[idx.totalTime]) || 0 
+                        };
+                    }
+                    workouts[workoutIndex].exercises.push({
+                        type: cols[idx.type],
+                        name: cols[idx.name],
+                        reps: parseInt(cols[idx.reps]) || 0,
+                        weights: cols[idx.weights] ? cols[idx.weights].split('|').map(w => parseFloat(w) || 0) : [],
+                        unit: cols[idx.unit],
+                        difficulty: parseInt(cols[idx.diff]) || 0,
+                        dropset: cols[idx.dropset] === '1',
+                        duration: parseInt(cols[idx.duration]) || 0,
+                        time: parseInt(cols[idx.time]) || 0
+                    });
+                });
+                const imported = workouts.filter(Boolean);
+                // [End of your existing parsing logic]
+
+                // 3. This modal now controls the Promise
+                showModal(
+                    `Found ${imported.length} workouts. Importing will overwrite your current history. Continue?`,
+                    () => { // onConfirm
+                        App.workouts = imported;
+                        saveWorkouts();
+                        renderHistory();
+                        updateExerciseSelector();
+                        renderProgress();
+                        showModal('Import complete.'); // <-- This is now the final modal
+                        resolve(true); // <-- Resolve promise on success
+                    },
+                    () => { // onCancel
+                        // User cancelled
+                        resolve(false); // <-- Resolve (as false) on cancel
+                    }
+                );
+            } catch (err) {
+                showModal('Failed to parse CSV file: ' + err.message);
+                reject(err);
             }
+        }; // <-- End of parse() function
 
-            workouts[workoutIndex].exercises.push({
-                type: cols[idx.type],
-                name: cols[idx.name],
-                reps: parseInt(cols[idx.reps]) || 0,
-                weights: cols[idx.weights] ? cols[idx.weights].split('|').map(w => parseFloat(w) || 0) : [],
-                unit: cols[idx.unit],
-                difficulty: parseInt(cols[idx.diff]) || 0,
-                dropset: cols[idx.dropset] === '1',
-                duration: parseInt(cols[idx.duration]) || 0,
-                time: parseInt(cols[idx.time]) || 0
-            });
-        });
-
-        const imported = workouts.filter(Boolean); // Remove empty/sparse entries
-
-        showModal(
-            `Found ${imported.length} workouts. Importing will overwrite your current history. Continue?`,
-            () => {
-                App.workouts = imported;
-                saveWorkouts();
-                renderHistory();
-                updateExerciseSelector();
-                renderProgress();
-                showModal('Import complete.');
-            },
-            () => {
-                // User cancelled
-            }
-        );
-    };
-    reader.readAsText(file);
+        // 4. Check the type of the input (this logic is outside 'parse')
+        if (typeof fileOrData === 'string') {
+            // It's raw text data from Google Drive
+            parse(fileOrData);
+        } else if (fileOrData instanceof Blob) {
+            // It's a File/Blob from the local input
+            const reader = new FileReader();
+            reader.onload = e => {
+                parse(e.target.result);
+            };
+            reader.onerror = () => {
+                showModal('Failed to read file.');
+                reject(new Error('FileReader error.'));
+            };
+            reader.readAsText(fileOrData);
+        } else {
+            showModal('Invalid import data type.');
+            reject(new Error('Invalid import data type.'));
+        }
+    }); // <-- End of new Promise
 }
 
 // ==========================================================================
@@ -1680,6 +1699,8 @@ let gapiInited = false;
 let gisInited = false;
 document.getElementById('authorize_button').style.visibility = 'hidden';
 document.getElementById('signout_button').style.visibility = 'hidden';
+document.getElementById('backup_button').style.visibility = 'hidden';
+document.getElementById('restore_button').style.visibility = 'hidden';
 /**
  * Callback after api.js is loaded.
  */
@@ -1726,6 +1747,8 @@ function handleAuthClick() {
 			throw (resp);
 		}
 		document.getElementById('signout_button').style.visibility = 'visible';
+		document.getElementById('backup_button').style.visibility = 'visible';
+		document.getElementById('restore_button').style.visibility = 'visible';
 		document.getElementById('authorize_button').innerText = 'Refresh';
 	};
 	if (gapi.client.getToken() === null) {
@@ -1738,16 +1761,17 @@ function handleAuthClick() {
 	}
 }
 /**
- *  Sign out the user upon button click.
+ * Sign out the user upon button click.
  */
 function handleSignoutClick() {
 	const token = gapi.client.getToken();
 	if (token !== null) {
 		google.accounts.oauth2.revoke(token.access_token);
 		gapi.client.setToken('');
-		document.getElementById('content').innerText = '';
 		document.getElementById('authorize_button').innerText = 'Authorize';
 		document.getElementById('signout_button').style.visibility = 'hidden';
+		document.getElementById('backup_button').style.visibility = 'hidden'; // <-- ADD THIS
+		document.getElementById('restore_button').style.visibility = 'hidden'; // <-- ADD THIS
 	}
 }
 
@@ -1840,4 +1864,78 @@ async function handleBackups() {
 		console.error("Backup failed:", err);
 		showModal("Backup failed. Check console for details.");
 	}
+}
+
+// ==========================================================================
+//  Google Drive Restore Helpers
+// ==========================================================================
+
+/**
+ * Finds the most recent CSV backup file in the backup folder.
+ * Returns its file ID, or null if none found.
+ */
+async function findLatestBackupFile() {
+  const folderId = await ensureBackupFolder();
+
+  const response = await gapi.client.drive.files.list({
+    q: `'${folderId}' in parents and mimeType='text/csv' and trashed=false`,
+    orderBy: 'modifiedTime desc',
+    fields: 'files(id, name, modifiedTime)',
+    spaces: 'drive',
+    pageSize: 1, // only get the newest one
+  });
+
+  const files = response.result.files || [];
+  if (files.length === 0) {
+    throw new Error('No backup files found in Google Drive.');
+  }
+
+  console.log('Latest backup file:', files[0]);
+  return files[0];
+}
+
+/**
+ * Downloads the given file ID from Google Drive as plain text.
+ */
+async function downloadFileContent(fileId) {
+  const accessToken = gapi.auth.getToken().access_token;
+  const response = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+    {
+      headers: new Headers({ Authorization: 'Bearer ' + accessToken }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Download failed: ${response.statusText}`);
+  }
+
+  return await response.text();
+}
+
+/**
+ * Handles restoring backup from Google Drive.
+ * - Finds the newest backup CSV
+ * - Downloads it
+ * - Imports it into your app
+ */
+async function handleRestoreFromDrive() {
+  try {
+    showModal('Restoring from Google Drive...');
+    const latest = await findLatestBackupFile();
+    const csvData = await downloadFileContent(latest.id);
+
+    // Hide the 'Restoring...' modal *before* calling the import function
+    hideModal(); 
+
+    // Now, call the import function. It will show its own modals.
+    // We use .catch() because the promise will 'reject' on a real error.
+    // The import function itself handles 'Import complete' or 'cancel'.
+    await importWorkoutsFromCSV(csvData);
+
+  } catch (err) {
+    console.error('Restore failed:', err);
+    hideModal(); // Ensure all modals are closed
+    showModal('Restore failed: ' + err.message);
+  }
 }
