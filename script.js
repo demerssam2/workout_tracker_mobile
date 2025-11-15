@@ -13,7 +13,12 @@ const MQL_DARK = window.matchMedia('(prefers-color-scheme: dark)');
 // ==========================================================================
 
 const App = {
-	settings: JSON.parse(localStorage.getItem(STORAGE_SETTINGS_KEY)) || { defaultUnit: 'kg', appearance: 'light' },
+	settings: Object.assign({
+		defaultUnit: 'kg',
+		appearance: 'light',
+		lastDriveBackup: null,
+		historyDirty: false
+	}, JSON.parse(localStorage.getItem(STORAGE_SETTINGS_KEY)) || {}),
 	workouts: JSON.parse(localStorage.getItem(STORAGE_WORKOUTS_KEY)) || [],
 	editIndex: null, // Index of the workout being edited, or null
 	workoutStarted: false,
@@ -68,6 +73,26 @@ const escapeHtml = str => {
 	return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 		.replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 };
+
+function renderBackupAndDirtyUI() {
+	const last = App.settings.lastDriveBackup;
+	const lastEl = $('lastBackupDisplay');
+	const dirtyEl = $('historyDirtyDisplay');
+	if (lastEl) {
+		lastEl.textContent = last ? new Date(last).toLocaleString() : 'Never';
+	}
+	if (dirtyEl) {
+		if (App.settings.historyDirty) {
+			dirtyEl.textContent = 'Unsaved changes';
+			dirtyEl.classList.remove('clean');
+			dirtyEl.classList.add('dirty');
+		} else {
+			dirtyEl.textContent = 'No changes';
+			dirtyEl.classList.remove('dirty');
+			dirtyEl.classList.add('clean');
+		}
+	}
+}
 
 // ==========================================================================
 //  DOM Helpers
@@ -940,6 +965,9 @@ function saveWorkout() {
 	}
 
 	saveWorkouts();
+	App.settings.historyDirty = true;
+	saveSettings();
+	renderBackupAndDirtyUI();
 	renderHistory();
 	updateExerciseSelector();
 	renderProgress(); // Update charts
@@ -1019,6 +1047,9 @@ function deleteWorkout(index) {
 			// OK button pressed
 			App.workouts.splice(index, 1);
 			saveWorkouts();
+			App.settings.historyDirty = true;
+			saveSettings();
+			renderBackupAndDirtyUI();
 			renderHistory();
 			updateExerciseSelector();
 			renderProgress();
@@ -1512,6 +1543,10 @@ function importWorkoutsFromCSV(fileOrData) {
                     () => { // onConfirm
                         App.workouts = imported;
                         saveWorkouts();
+                        // mark the imported data as clean (canonical) — adjust if different semantics needed
+                        App.settings.historyDirty = false;
+                        saveSettings();
+                        renderBackupAndDirtyUI();
                         renderHistory();
                         updateExerciseSelector();
                         renderProgress();
@@ -1673,6 +1708,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	// --- 7. Initial Render ---
 	renderHistory();
 	updateExerciseSelector();
+	renderBackupAndDirtyUI();
 	// Note: Progress charts are now rendered only when the tab is clicked.
 	
 	// --- 8. Attach Observers ---
@@ -1859,6 +1895,10 @@ async function handleBackups() {
 		.split("T")[0]}.csv`;
 
 		await uploadCSVToDrive(csv, fileName);
+		App.settings.lastDriveBackup = new Date().toISOString();
+		App.settings.historyDirty = false;
+		saveSettings();
+		renderBackupAndDirtyUI();
 		showModal("Backup successful! Check your Google Drive folder.");
 	} catch (err) {
 		console.error("Backup failed:", err);

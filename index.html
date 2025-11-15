@@ -121,10 +121,14 @@
 				<div class="settings-row">
 					<label>Sync to Google Drive</label>
 					<div>
-						<button id="authorize_button" onclick="handleAuthClick()">Authorize</button>
+						<button id="authorize_button" onclick="handleAuthClick()">Sign in</button>
 						<button id="signout_button" onclick="handleSignoutClick()">Sign Out</button>
 						<button id="backup_button" onclick="handleBackups()">Backup to Drive</button>
 						<button id="restore_button" onclick="handleRestoreFromDrive()">Restore from Drive</button>
+						<div style="margin-top:8px; font-size:0.9rem;">
+							<div>Last backup: <span id="lastBackupDisplay">Never</span></div>
+							<div>History changes: <span id="historyDirtyDisplay" class="clean">No changes</span></div>
+						</div>
 					</div>
 				</div>
 			</div>

@@ -879,6 +879,9 @@ body.dark .setting-row select {
 	border-color: #334155;
 }
 
+#historyDirtyDisplay.clean { color: var(--btn-start); font-weight: 600; }
+#historyDirtyDisplay.dirty { color: var(--btn-end); font-weight: 700; }
+
 /* ==========================================================================
    10. Modal (Alert/Confirm)
    ========================================================================== */
