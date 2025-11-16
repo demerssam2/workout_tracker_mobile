@@ -882,6 +882,33 @@ body.dark .setting-row select {
 #historyDirtyDisplay.clean { color: var(--btn-start); font-weight: 600; }
 #historyDirtyDisplay.dirty { color: var(--btn-end); font-weight: 700; }
 
+.drive-buttons-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 8px;
+}
+
+@media (min-width: 600px) {
+	.drive-buttons-grid {
+		grid-template-columns: repeat(4, 1fr);
+	}
+}
+
+.icon-btn {
+	width: 44px;
+	height: 44px;
+	padding: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.icon-btn svg {
+	width: 22px;
+	height: 22px;
+	stroke: var(--fg);
+}
+
 /* ==========================================================================
    10. Modal (Alert/Confirm)
    ========================================================================== */

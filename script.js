@@ -1621,7 +1621,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	});
 	
 	// Import/Export buttons
-	$('exportCSVBtn').addEventListener('click', exportWorkoutsToCSV);
+	$('exportCSVBtn').addEventListener('click', () => downloadCSV(exportWorkoutsToCSV()));
 	$('importCSVBtn').addEventListener('click', () => $('importFileInput').click());
 	$('importFileInput').addEventListener('change', e => {
 		const file = e.target.files[0];
@@ -1733,10 +1733,10 @@ const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 let tokenClient;
 let gapiInited = false;
 let gisInited = false;
-document.getElementById('authorize_button').style.visibility = 'hidden';
-document.getElementById('signout_button').style.visibility = 'hidden';
-document.getElementById('backup_button').style.visibility = 'hidden';
-document.getElementById('restore_button').style.visibility = 'hidden';
+document.getElementById('authorize_button').style.display = 'none';
+document.getElementById('signout_button').style.display = 'none';
+document.getElementById('backup_button').style.display = 'none';
+document.getElementById('restore_button').style.display = 'none';
 /**
  * Callback after api.js is loaded.
  */
@@ -1771,7 +1771,7 @@ function gisLoaded() {
  */
 function maybeEnableButtons() {
 	if (gapiInited && gisInited) {
-		document.getElementById('authorize_button').style.visibility = 'visible';
+		document.getElementById('authorize_button').style.display = '';
 	}
 }
 /**
@@ -1782,9 +1782,9 @@ function handleAuthClick() {
 		if (resp.error !== undefined) {
 			throw (resp);
 		}
-		document.getElementById('signout_button').style.visibility = 'visible';
-		document.getElementById('backup_button').style.visibility = 'visible';
-		document.getElementById('restore_button').style.visibility = 'visible';
+		document.getElementById('signout_button').style.display = '';
+		document.getElementById('backup_button').style.display = '';
+		document.getElementById('restore_button').style.display = '';
 		document.getElementById('authorize_button').innerText = 'Refresh';
 	};
 	if (gapi.client.getToken() === null) {
@@ -1805,9 +1805,9 @@ function handleSignoutClick() {
 		google.accounts.oauth2.revoke(token.access_token);
 		gapi.client.setToken('');
 		document.getElementById('authorize_button').innerText = 'Authorize';
-		document.getElementById('signout_button').style.visibility = 'hidden';
-		document.getElementById('backup_button').style.visibility = 'hidden'; // <-- ADD THIS
-		document.getElementById('restore_button').style.visibility = 'hidden'; // <-- ADD THIS
+		document.getElementById('signout_button').style.display = 'none';
+		document.getElementById('backup_button').style.display = 'none'; // <-- ADD THIS
+		document.getElementById('restore_button').style.display = 'none'; // <-- ADD THIS
 	}
 }
 

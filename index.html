@@ -41,6 +41,16 @@
 			<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
 			<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
 		</symbol>
+		<symbol id="icon-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+			<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+			<polyline points="7 10 12 15 17 10"></polyline>
+			<line x1="12" y1="15" x2="12" y2="3"></line>
+		</symbol>
+		<symbol id="icon-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+			<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+			<polyline points="17 8 12 3 7 8"></polyline>
+			<line x1="12" y1="3" x2="12" y2="15"></line>
+		</symbol>
 	</svg>
 
 	<div class="top-controls-container">
@@ -111,20 +121,26 @@
 					</select>
 				</div>
 				<div class="setting-row">
-					<label>Export / Import History</label>
+					<label>On-Device History Backup</label>
 					<div>
-						<button id="exportCSVBtn">Export CSV</button>
-						<button id="importCSVBtn">Import CSV</button>
+						<button id="exportCSVBtn" class="icon-btn" title="Export to CSV file">
+							<svg><use href="#icon-download"></use></svg>
+						</button>
+						<button id="importCSVBtn" class="icon-btn" title="Import from CSV file">
+							<svg><use href="#icon-upload"></use></svg>
+						</button>
 						<input type="file" id="importFileInput" accept=".csv" style="display:none;">
 					</div>
 				</div>
 				<div class="settings-row">
-					<label>Sync to Google Drive</label>
+					<label>Backup with Google Drive</label>
 					<div>
-						<button id="authorize_button" onclick="handleAuthClick()">Sign in</button>
-						<button id="signout_button" onclick="handleSignoutClick()">Sign Out</button>
-						<button id="backup_button" onclick="handleBackups()">Backup to Drive</button>
-						<button id="restore_button" onclick="handleRestoreFromDrive()">Restore from Drive</button>
+						<div class="drive-buttons-grid">
+							<button id="authorize_button" onclick="handleAuthClick()">Sign in</button>
+							<button id="signout_button" onclick="handleSignoutClick()">Sign Out</button>
+							<button id="backup_button" onclick="handleBackups()">Backup to Drive</button>
+							<button id="restore_button" onclick="handleRestoreFromDrive()">Restore from Drive</button>
+						</div>
 						<div style="margin-top:8px; font-size:0.9rem;">
 							<div>Last backup: <span id="lastBackupDisplay">Never</span></div>
 							<div>History changes: <span id="historyDirtyDisplay" class="clean">No changes</span></div>
